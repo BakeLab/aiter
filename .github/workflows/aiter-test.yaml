@@ -2,11 +2,11 @@ name: Aiter Test
 
 on:
   push:
-    branches: [main]
+    branches: [trim]
   pull_request:
     # labeled: re-run when adding ci:mi300x for MI300X standard tests or ci:multi-gpu for 8-GPU tests
     types: [opened, synchronize, reopened, ready_for_review, labeled]
-    branches: [main]  # Triggers on PRs targeting `main`
+    branches: [trim]  # Triggers on PRs targeting `trim`
 
   workflow_dispatch:
   schedule:
@@ -16,7 +16,7 @@ concurrency:
   # Keep scheduled main runs from blocking push-triggered validation.
   # Keep opt-in label runs from canceling normal PR validation.
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ github.event.action == 'labeled' && github.event.label.name || 'default' }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/trim' }}
 
 env:
   GPU_ARCH_LIST: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:mi300x') || github.event.label.name == 'ci:mi300x') && 'gfx942;gfx950' || 'gfx950' }}
@@ -50,7 +50,7 @@ jobs:
 
           if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
             echo "run_tests=true" >> "$GITHUB_OUTPUT"
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            if [ "${GITHUB_REF}" = "refs/heads/trim" ]; then
               echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
             else
               echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
@@ -171,7 +171,7 @@ jobs:
         include:
           - python_version: "3.10"
             docker_image: ${{ needs.ci_config.outputs.pytorch_py310_image }}
-            build_enabled: ${{ github.ref == 'refs/heads/main' }}
+            build_enabled: ${{ github.ref == 'refs/heads/trim' }}
           - python_version: "3.12"
             docker_image: ${{ needs.ci_config.outputs.pytorch_py312_image }}
             build_enabled: true
@@ -391,7 +391,7 @@ jobs:
           docker logout || true
 
   upload_s3_manifest:
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
+    if: ${{ github.ref == 'refs/heads/trim' && github.event_name != 'schedule' }}
     needs: [build_aiter_wheels]
     name: Upload wheels and manifest to S3
     runs-on: ubuntu-latest
@@ -622,7 +622,7 @@ jobs:
           set -euo pipefail
 
           if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            if [ "${GITHUB_REF}" = "refs/heads/trim" ]; then
               echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
               echo "reason=main_branch" >> "$GITHUB_OUTPUT"
               echo "Aiter multi-GPU tests are required on main." >> "$GITHUB_STEP_SUMMARY"
@@ -1551,7 +1551,7 @@ jobs:
         timeout-minutes: 15
         with:
           workflow: aiter-test.yaml
-          branch: main
+          branch: trim
           name_is_regexp: true
           name: ^tuned-op-bench-[a-f0-9]+$
           path: /tmp/baseline_main/
@@ -1601,7 +1601,7 @@ jobs:
       - name: Stage baseline payload
         if: >-
           steps.current.outputs.found == 'true' &&
-          (github.event_name == 'push' && github.ref == 'refs/heads/main'
+          (github.event_name == 'push' && github.ref == 'refs/heads/trim'
            || github.event_name == 'workflow_dispatch')
         run: |
           mkdir -p /tmp/publish
@@ -1626,7 +1626,7 @@ jobs:
       - name: Publish baseline artifact
         if: >-
           steps.current.outputs.found == 'true' &&
-          (github.event_name == 'push' && github.ref == 'refs/heads/main'
+          (github.event_name == 'push' && github.ref == 'refs/heads/trim'
            || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@v4
         with:
