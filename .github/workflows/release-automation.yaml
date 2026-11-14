@@ -255,7 +255,7 @@ jobs:
       build_py310: true
       build_py312: true
       gpu_archs: 'gfx942;gfx950'
-      runner: build-only-aiter
+      runner: '["self-hosted", "linux", "x64", "cpu", "on-demand"]'
       add_date_stamp: false
       use_manylinux: true
       docker_login: false

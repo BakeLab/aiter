@@ -56,7 +56,7 @@ jobs:
       (contains(github.event.pull_request.labels.*.name, 'ci:vllm') ||
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
     needs: [check-signal, ci_config]
-    runs-on: build-only-aiter
+    runs-on: [self-hosted, linux, x64, cpu, on-demand]
     steps:
       - name: Checkout aiter repo
         uses: actions/checkout@v4

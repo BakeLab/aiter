@@ -96,7 +96,7 @@ jobs:
       (github.event.pull_request.draft == false &&
       contains(github.event.pull_request.labels.*.name, 'ci:vllm-di'))
     needs: ci_config
-    runs-on: build-only-aiter
+    runs-on: [self-hosted, linux, x64, cpu, on-demand]
     outputs:
       image_ref: ${{ steps.base_image.outputs.image_ref }}
     steps:

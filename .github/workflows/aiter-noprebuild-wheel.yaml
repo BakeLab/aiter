@@ -30,7 +30,7 @@ jobs:
 
   build_aiter_noprebuild_wheel:
     name: Build Aiter wheel without prebuilt kernels
-    runs-on: build-only-aiter
+    runs-on: [self-hosted, linux, x64, cpu, on-demand]
     needs: [ci_config]
     steps:
       # A shallow checkout, as in build_aiter_wheels: without tags,
