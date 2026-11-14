@@ -2,15 +2,15 @@ name: vLLM Benchmark
 
 on:
   push:
-    branches: [main]
+    branches: [trim]
   pull_request:
     types: [labeled, synchronize]
-    branches: [main]
+    branches: [trim]
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/trim' }}
 
 env:
   VLLM_BRANCH: "main"
@@ -56,7 +56,7 @@ jobs:
       (contains(github.event.pull_request.labels.*.name, 'ci:vllm') ||
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
     needs: [check-signal, ci_config]
-    runs-on: build-only-aiter
+    runs-on: [self-hosted, linux, x64, cpu, on-demand]
     steps:
       - name: Checkout aiter repo
         uses: actions/checkout@v4

@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag to publish. Empty creates the next scheduled tag from main, for example v0.1.20 -> v0.1.21.'
+        description: 'Release tag to publish. Empty creates the next scheduled tag from trim, for example v0.1.20 -> v0.1.21.'
         required: false
         type: string
       release_branch:
@@ -18,10 +18,10 @@ on:
         required: false
         type: string
       release_ref:
-        description: 'Source ref for a new scheduled release branch/tag when release_tag is empty or missing. Defaults to main.'
+        description: 'Source ref for a new scheduled release branch/tag when release_tag is empty or missing. Defaults to trim.'
         required: false
         type: string
-        default: main
+        default: trim
       create_missing_refs:
         description: 'Create a missing scheduled release branch/tag from release_ref. Post-release tags must already exist.'
         type: boolean
@@ -78,7 +78,7 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
           INPUT_RELEASE_BRANCH: ${{ github.event.inputs.release_branch || '' }}
-          INPUT_RELEASE_REF: ${{ github.event.inputs.release_ref || 'main' }}
+          INPUT_RELEASE_REF: ${{ github.event.inputs.release_ref || 'trim' }}
           CREATE_MISSING_REFS: ${{ github.event.inputs.create_missing_refs || true }}
           FORCE_REBUILD: ${{ github.event.inputs.force_rebuild || false }}
           EXPECTED_WHEEL_COUNT: '6'
@@ -255,7 +255,7 @@ jobs:
       build_py310: true
       build_py312: true
       gpu_archs: 'gfx942;gfx950'
-      runner: build-only-aiter
+      runner: '["self-hosted", "linux", "x64", "cpu", "on-demand"]'
       add_date_stamp: false
       use_manylinux: true
       docker_login: false

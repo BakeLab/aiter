@@ -14,7 +14,7 @@ on:
 
 jobs:
   promote:
-    runs-on: build-only-aiter
+    runs-on: [self-hosted, linux, x64, cpu, on-demand]
     permissions:
       id-token: write
       contents: read
