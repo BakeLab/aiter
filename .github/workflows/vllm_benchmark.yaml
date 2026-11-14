@@ -2,15 +2,15 @@ name: vLLM Benchmark
 
 on:
   push:
-    branches: [main]
+    branches: [trim]
   pull_request:
     types: [labeled, synchronize]
-    branches: [main]
+    branches: [trim]
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/trim' }}
 
 env:
   VLLM_BRANCH: "main"

@@ -8,12 +8,12 @@ name: Aiter Wheel Without Prebuilt Kernels
 
 on:
   push:
-    branches: [main]
+    branches: [trim]
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/trim' }}
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
   # Publishing is restricted to main; every job below depends on this one, so a
   # manual run on another branch does nothing.
   ci_config:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/trim' }}
     uses: ./.github/workflows/ci-config.yaml
 
   build_aiter_noprebuild_wheel:
@@ -233,7 +233,7 @@ jobs:
           # main/latest-noprebuild.json if this commit is still the head of
           # main. If the lookup fails, update it as usual.
           head=$(GIT_TERMINAL_PROMPT=0 timeout 60 \
-            git ls-remote "https://github.com/${GITHUB_REPOSITORY}" refs/heads/main | cut -f1) || head=""
+            git ls-remote "https://github.com/${GITHUB_REPOSITORY}" refs/heads/trim | cut -f1) || head=""
           if [ -n "${head}" ] && [ "${head}" != "${GITHUB_SHA}" ]; then
             echo "::notice::main has moved on to ${head}; leaving main/latest-noprebuild.json to that commit's run"
             exit 0
