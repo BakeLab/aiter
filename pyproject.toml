@@ -24,9 +24,8 @@ requires = [
 
 # Not derivable from this file: there is no [project] table, so ruff cannot read
 # `requires-python` and would fall back to its own default. Keep this in sync
-# with `python_requires` in setup.py. py310 is what ruff already resolved to, so
-# the UP0xx (PEP 585/604) verdicts are unchanged.
-target-version = "py310"
+# with `python_requires` in setup.py.
+target-version = "py314"
 
 # ruff's built-in exclude list contains the bare name `dist`, and a pattern with
 # no slash is matched against the basename at any depth -- so it silently skipped

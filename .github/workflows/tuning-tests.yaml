@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 45
     needs: ci_config
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
 
     steps:
       - name: Checkout code
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 75
     needs: ci_config
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
 
     steps:
       - name: Checkout code
@@ -203,7 +203,7 @@ jobs:
     timeout-minutes: 120
     needs: ci_config
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
 
     steps:
       - name: Checkout code

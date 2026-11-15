@@ -6,22 +6,14 @@ on:
       commit:
         description: 'Commit hash to build (leave empty to use current commit)'
         required: false
-      build_py310:
-        description: 'Build with Python 3.10'
+      build_py314:
+        description: 'Build with Python 3.14'
         type: boolean
         default: true
-      build_py312:
-        description: 'Build with Python 3.12'
-        type: boolean
-        default: true
-      docker_image_py310:
-        description: 'Docker image for Python 3.10 build'
+      docker_image_py314:
+        description: 'Docker image for Python 3.14 build'
         required: true
-        default: 'rocm/pytorch:rocm7.2_ubuntu22.04_py3.10_pytorch_release_2.9.1'
-      docker_image_py312:
-        description: 'Docker image for Python 3.12 build'
-        required: true
-        default: 'rocm/pytorch:rocm7.2_ubuntu24.04_py3.12_pytorch_release_2.9.1'
+        default: 'rocm/pytorch:rocm7.14_ubuntu26.04_py3.14_pytorch_release_2.12.0'
       gpu_archs:
         description: 'GPU architectures (e.g. gfx942;gfx950)'
         required: false
@@ -59,21 +51,12 @@ on:
         description: 'Release type for S3 publishing'
         type: string
         required: true
-      docker_image_py310:
-        description: 'Docker image for Python 3.10 build'
+      docker_image_py314:
+        description: 'Docker image for Python 3.14 build'
         type: string
         required: true
-      docker_image_py312:
-        description: 'Docker image for Python 3.12 build'
-        type: string
-        required: true
-      build_py310:
-        description: 'Build Python 3.10 wheel'
-        type: boolean
-        required: false
-        default: true
-      build_py312:
-        description: 'Build Python 3.12 wheel'
+      build_py314:
+        description: 'Build Python 3.14 wheel'
         type: boolean
         required: false
         default: true
@@ -151,12 +134,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python_version: "3.10"
-            docker_image: ${{ inputs.docker_image_py310 || github.event.inputs.docker_image_py310 }}
-            build_enabled: ${{ (inputs.build_py310 != false && inputs.release_type != '') || github.event.inputs.build_py310 == 'true' || github.event.inputs.build_py310 == true }}
-          - python_version: "3.12"
-            docker_image: ${{ inputs.docker_image_py312 || github.event.inputs.docker_image_py312 }}
-            build_enabled: ${{ (inputs.build_py312 != false && inputs.release_type != '') || github.event.inputs.build_py312 == 'true' || github.event.inputs.build_py312 == true }}
+          - python_version: "3.14"
+            docker_image: ${{ inputs.docker_image_py314 || github.event.inputs.docker_image_py314 }}
+            build_enabled: ${{ (inputs.build_py314 != false && inputs.release_type != '') || github.event.inputs.build_py314 == 'true' || github.event.inputs.build_py314 == true }}
 
     env:
       BUILD_DOCKER_IMAGE: ${{ matrix.docker_image }}
@@ -332,7 +312,7 @@ jobs:
         id: ml_py
         run: |
           set -e
-          PY="${PYTHON_VERSION/./}"  # 3.12 -> 312
+          PY="${PYTHON_VERSION/./}"  # 3.14 -> 314
           PYBIN="/opt/python/cp${PY}-cp${PY}/bin"
           echo "pybin=${PYBIN}" >> "$GITHUB_OUTPUT"
           echo "Using python: ${PYBIN}/python"
