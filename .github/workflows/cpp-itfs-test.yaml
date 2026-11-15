@@ -40,7 +40,7 @@ jobs:
     name: C++ Interface Tests (${{ matrix.label }})
     needs: [ci_config]
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
     strategy:
       fail-fast: false
       matrix:

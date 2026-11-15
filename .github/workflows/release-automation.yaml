@@ -250,14 +250,12 @@ jobs:
     uses: ./.github/workflows/aiter-release.yaml
     with:
       release_type: none
-      docker_image_py310: pytorch/manylinux2_28-builder:rocm${{ matrix.rocm_version }}
-      docker_image_py312: pytorch/manylinux2_28-builder:rocm${{ matrix.rocm_version }}
-      build_py310: true
-      build_py312: true
+      docker_image_py314: rocm/pytorch:rocm7.14_ubuntu26.04_py3.14_pytorch_release_2.12.0
+      build_py314: true
       gpu_archs: 'gfx942;gfx950'
       runner: '["self-hosted", "linux", "x64", "cpu", "on-demand"]'
       add_date_stamp: false
-      use_manylinux: true
+      use_manylinux: false
       docker_login: false
       commit: ${{ needs.prepare.outputs.release_tag }}
       artifact_suffix: rocm${{ matrix.rocm_version }}

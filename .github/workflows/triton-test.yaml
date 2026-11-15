@@ -114,7 +114,7 @@ jobs:
     needs: [split_triton_tests, check-signal, ci_config]
     uses: ./.github/workflows/prepare-triton-wheel.yaml
     with:
-      docker-image: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      docker-image: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       artifact-name: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
       retention-days: 3
 
@@ -130,7 +130,7 @@ jobs:
       matrix:
         shard: ${{ fromJSON(needs.split_triton_tests.outputs.shards) }}
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       TRITON_WHEEL_ARTIFACT_NAME: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
       TRITON_TEST: "op_tests/triton_tests/"
 
@@ -339,7 +339,7 @@ jobs:
       matrix:
         shard: ${{ fromJSON(needs.split_triton_tests.outputs.shards) }}
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       TRITON_WHEEL_ARTIFACT_NAME: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
       TRITON_TEST: "op_tests/triton_tests/"
 

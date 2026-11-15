@@ -69,7 +69,7 @@ jobs:
       # wheel is built in the same base image as the prebuilt wheels.
       - name: Build Aiter wheel in base container
         env:
-          DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+          DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
         run: |
           set -euo pipefail
           docker run --rm \
