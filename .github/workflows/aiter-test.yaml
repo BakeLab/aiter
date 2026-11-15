@@ -169,11 +169,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python_version: "3.10"
-            docker_image: ${{ needs.ci_config.outputs.pytorch_py310_image }}
-            build_enabled: ${{ github.ref == 'refs/heads/trim' }}
-          - python_version: "3.12"
-            docker_image: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+          - python_version: "3.14"
+            docker_image: ${{ needs.ci_config.outputs.pytorch_py314_image }}
             build_enabled: true
     steps:
       # ---- Common steps (fork and non-fork) ----
@@ -589,7 +586,7 @@ jobs:
     needs: [detect_aiter_test_scope, check-signal, ci_config]
     uses: ./.github/workflows/prepare-triton-wheel.yaml
     with:
-      docker-image: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      docker-image: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       artifact-name: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
       retention-days: 3
 
@@ -670,7 +667,7 @@ jobs:
     name: Standard Tests (1 GPU)
     needs: [detect_aiter_test_scope, build_aiter_wheels, split_aiter_tests, prepare_triton_wheel, ci_config]
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       TRITON_WHEEL_ARTIFACT_NAME: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
     strategy:
       fail-fast: false
@@ -742,7 +739,7 @@ jobs:
           SEGMENT_DOWNLOAD_TIMEOUT_MINS: 30
         with:
           path: aiter_wheels
-          key: ${{ runner.os }}-aiter-wheel-${{ github.event.pull_request.head.sha || github.sha }}-py3.12-${{ env.AITER_PREBUILD_CACHE_SUFFIX }}
+          key: ${{ runner.os }}-aiter-wheel-${{ github.event.pull_request.head.sha || github.sha }}-py3.14-${{ env.AITER_PREBUILD_CACHE_SUFFIX }}
 
       - name: Download Aiter wheel artifact
         if: steps.restore_aiter_wheel.outputs.cache-hit != 'true'
@@ -751,7 +748,7 @@ jobs:
         timeout-minutes: 30
         continue-on-error: true
         with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.12
+          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
           path: aiter_wheels
 
       - name: Retry Download Aiter wheel artifact
@@ -760,7 +757,7 @@ jobs:
         uses: actions/download-artifact@v8.0.1
         timeout-minutes: 30
         with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.12
+          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
           path: aiter_wheels
 
       - name: Ensure zstd for Triton wheel cache
@@ -1133,7 +1130,7 @@ jobs:
     if: ${{ needs.detect_multigpu_test_scope.outputs.run_multigpu_tests == 'true' }}
     needs: [detect_multigpu_test_scope, build_aiter_wheels, prepare_triton_wheel, ci_config]
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       TRITON_WHEEL_ARTIFACT_NAME: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
     strategy:
       fail-fast: false
@@ -1157,7 +1154,7 @@ jobs:
           SEGMENT_DOWNLOAD_TIMEOUT_MINS: 30
         with:
           path: aiter_wheels
-          key: ${{ runner.os }}-aiter-wheel-${{ github.event.pull_request.head.sha || github.sha }}-py3.12-${{ env.AITER_PREBUILD_CACHE_SUFFIX }}
+          key: ${{ runner.os }}-aiter-wheel-${{ github.event.pull_request.head.sha || github.sha }}-py3.14-${{ env.AITER_PREBUILD_CACHE_SUFFIX }}
 
       - name: Download Aiter wheel artifact
         if: steps.restore_aiter_wheel.outputs.cache-hit != 'true'
@@ -1166,7 +1163,7 @@ jobs:
         timeout-minutes: 30
         continue-on-error: true
         with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.12
+          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
           path: aiter_wheels
 
       - name: Retry Download Aiter wheel artifact
@@ -1174,7 +1171,7 @@ jobs:
         uses: actions/download-artifact@v8.0.1
         timeout-minutes: 30
         with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.12
+          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
           path: aiter_wheels
 
       - name: Ensure zstd for Triton wheel cache

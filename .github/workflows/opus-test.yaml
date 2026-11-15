@@ -49,7 +49,7 @@ jobs:
     name: OPUS Tests (${{ matrix.runner == 'linux-aiter-oci-mi300x-1' && 'MI300X' || 'MI35X' }})
     needs: [check-signal, ci_config]
     env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
     strategy:
       fail-fast: false
       matrix:

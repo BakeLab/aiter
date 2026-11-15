@@ -538,11 +538,9 @@ setup(
         "build_ext": build_ext,
         **({"bdist_wheel": _python_agnostic_bdist_wheel()} if AITER_PY3_WHEEL else {}),
     },
-    # 3.8/3.9 have not actually worked for a long time: 81 modules already use
-    # PEP 604 annotations (`X | None`) without `from __future__ import
-    # annotations`, so they raise TypeError at import time on <3.10. Keep in sync
+    # Runtime support starts at Python 3.14. Keep in sync
     # with `target-version` under [tool.ruff] in pyproject.toml.
-    python_requires=">=3.10",
+    python_requires=">=3.14",
     install_requires=install_requires,
     extras_require={
         # Triton-based communication using Iris

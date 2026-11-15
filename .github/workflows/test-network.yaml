@@ -27,7 +27,7 @@ jobs:
           -v "${{ github.workspace }}:/workspace" \
           -w /workspace \
           --name test_pypi \
-          python:3.10-slim \
+          python:3.14-slim \
     
       - name: Test network speed and latency
         run: |

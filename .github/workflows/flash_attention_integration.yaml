@@ -139,7 +139,7 @@ jobs:
     needs: [check-signal, prechecks, ci_config]
     runs-on: ${{ matrix.runner }}
     env:
-      BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
     strategy:
       fail-fast: false
       matrix:
@@ -589,7 +589,7 @@ jobs:
     needs: [check-signal, prechecks, ci_config]
     runs-on: linux-aiter-mi35x-1
     env:
-      BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py312_image }}
+      BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
 
     steps:
       - name: Checkout aiter repo
