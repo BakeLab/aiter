@@ -151,106 +151,41 @@ jobs:
           # (SEC-00837 / ROCM-26712).
           docker logout || true
 
-  # Published next to the prebuilt wheels, with its own manifests
-  # (latest-noprebuild.json) so the prebuilt wheels' latest.json is untouched.
-  upload_s3_noprebuild:
-    name: Upload wheel without prebuilt kernels and manifest to S3
+  # The wheel is discoverable from the Gitea PyPI Simple index. Keep an
+  # immutable Generic Package manifest for consumers that need the wheel URL
+  # and source commit; unlike the old S3 latest pointer, it is keyed by SHA.
+  publish_noprebuild:
+    name: Publish wheel and manifest to Gitea
     needs: [build_aiter_noprebuild_wheel]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
+      - name: Checkout source commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      # Use the same OIDC publisher as Breadkernel. Pin the helper source so a
+      # change there cannot silently change this workflow's publishing code.
+      - name: Checkout shared package publisher
+        uses: actions/checkout@v4
+        with:
+          repository: BakeLab/breadkernel
+          ref: e1c7920d4c20e0fef86862dc951e5c7b177e010b
+          path: .shared-publisher
+
       - name: Download wheel artifact
         uses: actions/download-artifact@v8.0.1
         with:
           name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}
           path: noprebuild-wheel
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::661452401056:role/framework-aiter-nightlies
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
 
-      - name: Install AWS CLI
-        run: |
-          if ! command -v aws &> /dev/null; then
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -q awscliv2.zip
-            sudo ./aws/install
-            rm -rf awscliv2.zip aws
-          fi
-
-      - name: Upload wheel and versioned manifest to S3
+      - name: Publish wheel and immutable manifest
         run: |
           set -euo pipefail
-          S3_STAGING="s3://framework-whls-nightlies/whl-staging/gfx942-gfx950"
-
-          shopt -s nullglob
-          wheels=(noprebuild-wheel/amd_aiter*.whl)
-          if [ "${#wheels[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one amd_aiter wheel, found ${#wheels[@]}"
-            exit 1
-          fi
-          WHL="${wheels[0]}"
-          WHL_NAME=$(basename "${WHL}")
-
-          echo "Uploading ${WHL_NAME}..."
-          aws s3 cp "${WHL}" "${S3_STAGING}/${WHL_NAME}" \
-            --cache-control "public, max-age=31536000, immutable"
-
-          MANIFEST_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          export WHL_NAME MANIFEST_TIMESTAMP
-          python3 - <<'PY'
-          import json
-          import os
-          from urllib.parse import quote
-
-          whl_name = os.environ["WHL_NAME"]
-          whl_url = f"{os.environ['S3_PUBLIC']}/{quote(whl_name, safe='')}"
-          # Same layout as latest.json, keyed by the py3 tag.
-          manifest = {
-              "branch": os.environ["GITHUB_REF_NAME"],
-              "timestamp": os.environ["MANIFEST_TIMESTAMP"],
-              "commit": os.environ["GITHUB_SHA"],
-              "wheels": {"py3": {"wheel_name": whl_name, "wheel_url": whl_url}},
-              "wheel_name": whl_name,
-              "wheel_url": whl_url,
-          }
-          with open("latest-noprebuild.json", "w") as f:
-              json.dump(manifest, f, indent=2)
-              f.write("\n")
-          print(f"Manifest: {json.dumps(manifest, indent=2)}")
-          PY
-
-          aws s3 cp latest-noprebuild.json \
-            "${S3_STAGING}/commits/${GITHUB_SHA}/latest-noprebuild.json" \
-            --content-type application/json \
-            --cache-control "public, max-age=31536000, immutable"
-
-          # Runs for consecutive commits can finish out of order: only move
-          # main/latest-noprebuild.json if this commit is still the head of
-          # main. If the lookup fails, update it as usual.
-          head=$(GIT_TERMINAL_PROMPT=0 timeout 60 \
-            git ls-remote "https://github.com/${GITHUB_REPOSITORY}" refs/heads/trim | cut -f1) || head=""
-          if [ -n "${head}" ] && [ "${head}" != "${GITHUB_SHA}" ]; then
-            echo "::notice::main has moved on to ${head}; leaving main/latest-noprebuild.json to that commit's run"
-            exit 0
-          fi
-
-          aws s3 cp latest-noprebuild.json \
-            "${S3_STAGING}/main/latest-noprebuild.json" \
-            --content-type application/json \
-            --cache-control "no-store, max-age=0, must-revalidate"
-
-          if [ -n "${CLOUDFRONT_DISTRIBUTION_ID:-}" ]; then
-            aws cloudfront create-invalidation \
-              --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
-              --paths "/whl-staging/gfx942-gfx950/main/latest-noprebuild.json"
-          else
-            echo "::warning::CLOUDFRONT_DISTRIBUTION_ID is not set; skipping latest-noprebuild.json invalidation"
-          fi
-        env:
-          S3_PUBLIC: "https://rocm.frameworks-nightlies.amd.com/whl-staging/gfx942-gfx950"
-          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.AITER_WHEEL_CLOUDFRONT_DISTRIBUTION_ID }}
+          python3 .github/scripts/publish_noprebuild.py noprebuild-wheel
