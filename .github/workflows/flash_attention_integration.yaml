@@ -49,21 +49,6 @@ jobs:
   ci_config:
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-
-      - name: Wait for Checks workflow
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
   prechecks:
     runs-on: ubuntu-latest
     outputs:
@@ -114,7 +99,7 @@ jobs:
   flash_attention_triton:
     if: ${{ needs.prechecks.outputs.run_triton == 'true' }}
     name: Flash Attention - Triton / ${{ matrix.label }} (1 GPU)
-    needs: [check-signal, prechecks, ci_config]
+    needs: [prechecks, ci_config]
     runs-on: ${{ matrix.runner }}
     env:
       BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
@@ -565,7 +550,7 @@ jobs:
     if: false  # Disabled until CK tests are ready
     # if: ${{ needs.prechecks.outputs.run_ck == 'true' }}
     name: Flash Attention - CK (1 GPU)
-    needs: [check-signal, prechecks, ci_config]
+    needs: [prechecks, ci_config]
     runs-on: linux-aiter-mi35x-1
     env:
       BASE_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}

@@ -34,23 +34,6 @@ jobs:
     if: ${{ needs.split_triton_tests.outputs.selected_count != '0' }}
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    needs: [split_triton_tests]
-    if: ${{ needs.split_triton_tests.outputs.selected_count != '0' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Checks workflow
-        # Only PRs wait for the pre-checks. The nightly tests main as it is.
-        if: ${{ github.event_name == 'pull_request' }}
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
-  # Step 1: split triton tests into 8 shards, output triton_shard_0.list ... triton_shard_7.list
   split_triton_tests:
     # Not for drafts, nor for labels other than ci:triton-300x and ci:triton-355.
     if: ${{ !github.event.pull_request.draft && (github.event.action != 'labeled' && github.event.action != 'unlabeled' || contains(fromJSON('["ci:triton-300x", "ci:triton-355"]'), github.event.label.name)) }}
@@ -103,7 +86,7 @@ jobs:
 
   prepare_triton_wheel:
     if: ${{ needs.split_triton_tests.outputs.selected_count != '0' }}
-    needs: [split_triton_tests, check-signal, ci_config]
+    needs: [split_triton_tests, ci_config]
     uses: ./.github/workflows/prepare-triton-wheel.yaml
     with:
       docker-image: ${{ needs.ci_config.outputs.pytorch_py314_image }}
@@ -116,7 +99,7 @@ jobs:
     name: Triton Tests (MI35X) / Shard ${{ matrix.shard }}
     runs-on: linux-aiter-mi35x-1
     timeout-minutes: 120
-    needs: [split_triton_tests, prepare_triton_wheel, check-signal, ci_config]
+    needs: [split_triton_tests, prepare_triton_wheel, ci_config]
     strategy:
       fail-fast: false
       matrix:
@@ -325,7 +308,7 @@ jobs:
     name: Triton Tests (MI300X) / Shard ${{ matrix.shard }}
     runs-on: linux-aiter-oci-mi300x-1
     timeout-minutes: 60
-    needs: [split_triton_tests, prepare_triton_wheel, check-signal, ci_config]
+    needs: [split_triton_tests, prepare_triton_wheel, ci_config]
     strategy:
       fail-fast: false
       matrix:

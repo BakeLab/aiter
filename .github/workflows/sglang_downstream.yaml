@@ -28,30 +28,12 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.draft == false &&
-      (contains(github.event.pull_request.labels.*.name, 'ci:sglang') ||
-      contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Checks workflow
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
   select-sglang-tests:
     if: >-
       github.event_name != 'pull_request' ||
       (github.event.pull_request.draft == false &&
       (contains(github.event.pull_request.labels.*.name, 'ci:sglang') ||
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    needs: [check-signal]
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.select.outputs.matrix }}
@@ -69,7 +51,7 @@ jobs:
   sglang:
     if: needs.select-sglang-tests.outputs.has_tests == 'true'
     name: Sglang ${{ matrix.model }} ${{ matrix.test_type }} (8 GPU)
-    needs: [check-signal, select-sglang-tests, ci_config]
+    needs: [select-sglang-tests, ci_config]
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
