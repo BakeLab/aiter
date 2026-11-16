@@ -22,10 +22,6 @@ on:
         description: 'Skip test job for faster iteration'
         type: boolean
         default: false
-      skip_promote:
-        description: 'Skip promote job (build + test only)'
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -42,7 +38,6 @@ jobs:
       runner: '["self-hosted", "linux", "x64", "cpu", "on-demand"]'
       add_date_stamp: true
     permissions:
-      id-token: write
       contents: read
       actions: read
 
@@ -56,16 +51,3 @@ jobs:
     permissions:
       contents: read
       actions: read
-
-  promote:
-    needs: [build, test]
-    if: >-
-      ${{ github.repository_owner == 'ROCm'
-          && !(github.event.inputs.skip_promote || false) }}
-    uses: ./.github/workflows/promote.yaml
-    with:
-      release_type: ${{ github.event_name == 'schedule' && 'nightlies' || github.event_name == 'pull_request' && 'nightlies' || 'devreleases' }}
-      wheel_names: ${{ needs.build.outputs.wheel_names }}
-    permissions:
-      id-token: write
-      contents: read

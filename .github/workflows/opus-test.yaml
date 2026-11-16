@@ -29,25 +29,12 @@ jobs:
     if: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    if: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Checks workflow
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
   opus:
     if: >-
       (!github.event.pull_request || github.event.pull_request.draft == false) &&
       github.event.action != 'labeled'
     name: OPUS Tests (${{ matrix.runner == 'linux-aiter-oci-mi300x-1' && 'MI300X' || 'MI35X' }})
-    needs: [check-signal, ci_config]
+    needs: [ci_config]
     env:
       DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
     strategy:
