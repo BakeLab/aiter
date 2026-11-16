@@ -31,23 +31,6 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.draft == false &&
-      (contains(github.event.pull_request.labels.*.name, 'ci:vllm') ||
-      contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Checks workflow
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
   build_aiter_wheel:
     name: Build Aiter wheel
     if: >-
@@ -55,7 +38,7 @@ jobs:
       (github.event.pull_request.draft == false &&
       (contains(github.event.pull_request.labels.*.name, 'ci:vllm') ||
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    needs: [check-signal, ci_config]
+    needs: [ci_config]
     runs-on: [self-hosted, linux, x64, cpu, on-demand]
     steps:
       - name: Checkout aiter repo

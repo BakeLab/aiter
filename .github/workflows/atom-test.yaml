@@ -36,24 +36,6 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
     uses: ./.github/workflows/ci-config.yaml
 
-  check-signal:
-    if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.draft == false &&
-      (contains(github.event.pull_request.labels.*.name, 'ci:atom') ||
-      contains(github.event.pull_request.labels.*.name, 'ci:atom_full') ||
-      contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Checks workflow
-        run: ./.github/scripts/check_signal.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_SHA: ${{ github.sha }}
-
   load-atom-models:
     if: >-
       github.event_name != 'pull_request' ||
@@ -199,7 +181,7 @@ jobs:
       (contains(github.event.pull_request.labels.*.name, 'ci:atom') ||
       contains(github.event.pull_request.labels.*.name, 'ci:atom_full') ||
       contains(github.event.pull_request.labels.*.name, 'ci:all')))
-    needs: [check-signal, load-atom-models, ci_config]
+    needs: [load-atom-models, ci_config]
     name: Accuracy (${{ matrix.display_name }}, ${{ matrix.runner }})
     strategy:
       fail-fast: false
