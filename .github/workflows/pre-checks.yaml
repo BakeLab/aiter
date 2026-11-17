@@ -25,15 +25,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: echo "Skipping dependency check on main branch, considered success."
 
-  black:
-    name: Check Code Style with Black
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run Black
-        uses: psf/black@stable
-
   ruff:
     name: Check Code Style with Ruff
     runs-on: ubuntu-latest
