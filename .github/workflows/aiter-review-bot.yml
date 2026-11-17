@@ -40,6 +40,7 @@ jobs:
     # after taking a hosted-runner slot that the real requests are queueing for. Eighteen reviews
     # produced thirty-six such runs competing with themselves.
     if: >
+      github.server_url == 'https://github.com' &&
       github.event.issue.pull_request &&
       github.event.comment.user.login != 'aiter-bot' &&
       contains(github.event.comment.body, '@aiter-bot review')
@@ -113,7 +114,7 @@ jobs:
     # and the run reads as "in progress" indefinitely -- this box sat dead for days that way.
     # This job runs on GitHub-hosted infra, so it is alive exactly when the box is not.
     needs: gate
-    if: needs.gate.outputs.ok == 'true'
+    if: github.server_url == 'https://github.com' && needs.gate.outputs.ok == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
@@ -133,7 +134,7 @@ jobs:
         run: python3 .claude/skills/review-pr/watchdog.py
   review:
     needs: gate
-    if: needs.gate.outputs.ok == 'true'
+    if: github.server_url == 'https://github.com' && needs.gate.outputs.ok == 'true'
     runs-on: [self-hosted, box308]        # label the runner with these at registration
     outputs:
       notified: ${{ steps.notify.outputs.notified }}
@@ -207,7 +208,7 @@ jobs:
     needs: [gate, review]
     # Skips the common case entirely rather than spinning a runner to decide it did not
     # need one. lost_review.py keeps its own guard, so this is a saving, not the decision.
-    if: always() && needs.gate.outputs.ok == 'true' && needs.review.result != 'success'
+    if: always() && github.server_url == 'https://github.com' && needs.gate.outputs.ok == 'true' && needs.review.result != 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
