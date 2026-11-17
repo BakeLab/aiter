@@ -144,7 +144,7 @@ jobs:
     if: >-
       needs.detect_aiter_test_scope.outputs.run_tests == 'true' ||
       needs.detect_aiter_test_scope.outputs.run_multigpu_tests == 'true'
-    runs-on: ${{ matrix.build_enabled && 'build-only-aiter' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.build_enabled && fromJSON('["self-hosted", "linux", "x64", "cpu", "on-demand"]') || 'ubuntu-latest' }}
     needs: [detect_aiter_test_scope, ci_config]
     permissions:
       id-token: write
@@ -405,7 +405,7 @@ jobs:
               and os.environ.get("EVENT_ACTION") == "labeled"
           )
           run_mi35x = not labeled_event
-          run_mi300x = os.environ["GITHUB_REF"] == "refs/heads/main" or (
+          run_mi300x = os.environ["GITHUB_REF"] == "refs/heads/trim" or (
               os.environ["GITHUB_EVENT_NAME"] == "pull_request"
               and (
                   "ci:mi300x" in labels
