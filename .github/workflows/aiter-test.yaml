@@ -4,7 +4,7 @@ on:
   push:
     branches: [trim]
   pull_request:
-    # labeled: re-run when adding ci:mi300x for MI300X standard tests or ci:multi-gpu for 8-GPU tests
+    # labeled: re-run when adding ci:mi300x for MI300X standard tests
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches: [trim]  # Triggers on PRs targeting `trim`
 
@@ -33,7 +33,6 @@ jobs:
       pull-requests: read
     outputs:
       run_tests: ${{ steps.detect.outputs.run_tests }}
-      run_multigpu_tests: ${{ steps.detect.outputs.run_multigpu_tests }}
       reason: ${{ steps.detect.outputs.reason }}
     steps:
       - name: Detect whether Aiter tests are required
@@ -44,17 +43,11 @@ jobs:
           PR_DRAFT: ${{ github.event.pull_request.draft }}
           EVENT_ACTION: ${{ github.event.action }}
           LABEL_NAME: ${{ github.event.label.name }}
-          HAS_MULTIGPU_LABEL: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci:multi-gpu') && 'true' || 'false' }}
         run: |
           set -euo pipefail
 
           if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
             echo "run_tests=true" >> "$GITHUB_OUTPUT"
-            if [ "${GITHUB_REF}" = "refs/heads/trim" ]; then
-              echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
-            fi
             echo "reason=non_pull_request_event" >> "$GITHUB_OUTPUT"
             echo "Aiter tests are required for ${GITHUB_EVENT_NAME}." >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -62,7 +55,6 @@ jobs:
 
           if [ "${PR_DRAFT}" = "true" ]; then
             echo "run_tests=false" >> "$GITHUB_OUTPUT"
-            echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
             echo "reason=draft_pull_request" >> "$GITHUB_OUTPUT"
             echo "Aiter tests are skipped because this pull request is a draft." >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -71,17 +63,10 @@ jobs:
           if [ "${EVENT_ACTION}" = "labeled" ]; then
             if [ "${LABEL_NAME}" = "ci:mi300x" ]; then
               echo "run_tests=true" >> "$GITHUB_OUTPUT"
-              echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
               echo "reason=mi300x_label" >> "$GITHUB_OUTPUT"
               echo "Aiter MI300X standard tests are required because the ci:mi300x label was added." >> "$GITHUB_STEP_SUMMARY"
-            elif [ "${LABEL_NAME}" = "ci:multi-gpu" ]; then
-              echo "run_tests=false" >> "$GITHUB_OUTPUT"
-              echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
-              echo "reason=multigpu_label" >> "$GITHUB_OUTPUT"
-              echo "Aiter multi-GPU tests are required because a multi-GPU CI label was added." >> "$GITHUB_STEP_SUMMARY"
             else
               echo "run_tests=false" >> "$GITHUB_OUTPUT"
-              echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
               echo "reason=non_aiter_label" >> "$GITHUB_OUTPUT"
               echo "Aiter tests are skipped for label '${LABEL_NAME}'." >> "$GITHUB_STEP_SUMMARY"
             fi
@@ -114,7 +99,6 @@ jobs:
           done
 
           echo "run_tests=${run_tests}" >> "$GITHUB_OUTPUT"
-          echo "run_multigpu_tests=${HAS_MULTIGPU_LABEL}" >> "$GITHUB_OUTPUT"
           echo "reason=${reason}" >> "$GITHUB_OUTPUT"
 
           {
@@ -122,12 +106,9 @@ jobs:
             echo
             echo "- Changed files: ${#changed_files[@]}"
             echo "- Aiter tests required: ${run_tests}"
-            echo "- Aiter multi-GPU tests required: ${HAS_MULTIGPU_LABEL}"
             echo "- Reason: ${reason}"
             if [ "${run_tests}" = "true" ]; then
               echo "Aiter tests are required because at least one changed file matches the Aiter test scope."
-            elif [ "${HAS_MULTIGPU_LABEL}" = "true" ]; then
-              echo "Aiter multi-GPU tests are required because a multi-GPU CI label is present."
             else
               echo "Aiter tests are not required for this pull request."
             fi
@@ -135,15 +116,13 @@ jobs:
 
   ci_config:
     if: >-
-      needs.detect_aiter_test_scope.outputs.run_tests == 'true' ||
-      needs.detect_aiter_test_scope.outputs.run_multigpu_tests == 'true'
+      needs.detect_aiter_test_scope.outputs.run_tests == 'true'
     needs: detect_aiter_test_scope
     uses: ./.github/workflows/ci-config.yaml
 
   build_aiter_wheels:
     if: >-
-      needs.detect_aiter_test_scope.outputs.run_tests == 'true' ||
-      needs.detect_aiter_test_scope.outputs.run_multigpu_tests == 'true'
+      needs.detect_aiter_test_scope.outputs.run_tests == 'true'
     runs-on: ${{ matrix.build_enabled && fromJSON('["self-hosted", "linux", "x64", "cpu", "on-demand"]') || 'ubuntu-latest' }}
     needs: [detect_aiter_test_scope, ci_config]
     permissions:
@@ -450,83 +429,13 @@ jobs:
 
   prepare_triton_wheel:
     if: >-
-      needs.detect_aiter_test_scope.outputs.run_tests == 'true' ||
-      needs.detect_aiter_test_scope.outputs.run_multigpu_tests == 'true'
+      needs.detect_aiter_test_scope.outputs.run_tests == 'true'
     needs: [detect_aiter_test_scope, ci_config]
     uses: ./.github/workflows/prepare-triton-wheel.yaml
     with:
       docker-image: ${{ needs.ci_config.outputs.pytorch_py314_image }}
       artifact-name: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
       retention-days: 3
-
-  detect_multigpu_test_scope:
-    name: Detect Multi-GPU Test Scope
-    if: >-
-      always() &&
-      (needs.detect_aiter_test_scope.outputs.run_tests == 'true' ||
-      needs.detect_aiter_test_scope.outputs.run_multigpu_tests == 'true') &&
-      needs.build_aiter_wheels.result == 'success' &&
-      needs.prepare_triton_wheel.result == 'success'
-    needs: [detect_aiter_test_scope, build_aiter_wheels, prepare_triton_wheel]
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      run_multigpu_tests: ${{ steps.detect.outputs.run_multigpu_tests }}
-      reason: ${{ steps.detect.outputs.reason }}
-    steps:
-      - name: Detect whether multi-GPU tests are required
-        id: detect
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_DRAFT: ${{ github.event.pull_request.draft }}
-          EVENT_ACTION: ${{ github.event.action }}
-          LABEL_NAME: ${{ github.event.label.name }}
-        run: |
-          set -euo pipefail
-
-          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
-            if [ "${GITHUB_REF}" = "refs/heads/trim" ]; then
-              echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
-              echo "reason=main_branch" >> "$GITHUB_OUTPUT"
-              echo "Aiter multi-GPU tests are required on main." >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
-              echo "reason=non_main_non_pull_request_event" >> "$GITHUB_OUTPUT"
-              echo "Aiter multi-GPU tests are not required for ${GITHUB_EVENT_NAME} on ${GITHUB_REF}." >> "$GITHUB_STEP_SUMMARY"
-            fi
-            exit 0
-          fi
-
-          if [ "${PR_DRAFT}" = "true" ]; then
-            echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
-            echo "reason=draft_pull_request" >> "$GITHUB_OUTPUT"
-            echo "Aiter multi-GPU tests are skipped because this pull request is a draft." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          if [ "${EVENT_ACTION}" = "labeled" ] && [ "${LABEL_NAME}" != "ci:multi-gpu" ]; then
-            echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
-            echo "reason=non_multigpu_label" >> "$GITHUB_OUTPUT"
-            echo "Aiter multi-GPU tests are skipped for label '${LABEL_NAME}'." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          labels="$(gh pr view "${PR_NUMBER}" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --json labels \
-            --jq '.labels[].name')"
-
-          if printf '%s\n' "${labels}" | grep -Fxq "ci:multi-gpu"; then
-            echo "run_multigpu_tests=true" >> "$GITHUB_OUTPUT"
-            echo "reason=multigpu_label_present_after_build" >> "$GITHUB_OUTPUT"
-            echo "Aiter multi-GPU tests are required because a multi-GPU CI label is present after build." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "run_multigpu_tests=false" >> "$GITHUB_OUTPUT"
-            echo "reason=no_multigpu_label_after_build" >> "$GITHUB_OUTPUT"
-            echo "Aiter multi-GPU tests are not required because no multi-GPU CI label is present after build." >> "$GITHUB_STEP_SUMMARY"
-          fi
 
   standard:
     if: >-
@@ -993,333 +902,6 @@ jobs:
             echo "Missing ${missing} expected standard test log(s)." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  multi-gpu:
-    name: Multi-GPU Tests (8 GPU)
-    if: ${{ needs.detect_multigpu_test_scope.outputs.run_multigpu_tests == 'true' }}
-    needs: [detect_multigpu_test_scope, build_aiter_wheels, prepare_triton_wheel, ci_config]
-    env:
-      DOCKER_IMAGE: ${{ needs.ci_config.outputs.pytorch_py314_image }}
-      TRITON_WHEEL_ARTIFACT_NAME: ${{ needs.ci_config.outputs.triton_wheel_artifact_name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: linux-aiter-do-mi350x-8
-            label: MI350X
-    runs-on: ${{ matrix.runner }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Restore Aiter wheel cache
-        id: restore_aiter_wheel
-        continue-on-error: true
-        uses: actions/cache/restore@v4
-        env:
-          SEGMENT_DOWNLOAD_TIMEOUT_MINS: 30
-        with:
-          path: aiter_wheels
-          key: ${{ runner.os }}-aiter-wheel-${{ github.event.pull_request.head.sha || github.sha }}-py3.14-${{ env.AITER_PREBUILD_CACHE_SUFFIX }}
-
-      - name: Download Aiter wheel artifact
-        if: steps.restore_aiter_wheel.outputs.cache-hit != 'true'
-        id: download_aiter_wheel
-        uses: actions/download-artifact@v8.0.1
-        timeout-minutes: 30
-        continue-on-error: true
-        with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
-          path: aiter_wheels
-
-      - name: Retry Download Aiter wheel artifact
-        if: steps.restore_aiter_wheel.outputs.cache-hit != 'true' && steps.download_aiter_wheel.outcome == 'failure'
-        uses: actions/download-artifact@v8.0.1
-        timeout-minutes: 30
-        with:
-          name: ${{ env.AITER_WHEEL_ARTIFACT_NAME }}-py3.14
-          path: aiter_wheels
-
-      - name: Ensure zstd for Triton wheel cache
-        if: ${{ runner.os == 'Linux' }}
-        run: ./.github/scripts/ensure_zstd.sh
-
-      - name: Restore Triton wheel cache
-        id: restore_triton_wheel
-        continue-on-error: true
-        uses: actions/cache/restore@v4
-        env:
-          SEGMENT_DOWNLOAD_TIMEOUT_MINS: 30
-        with:
-          path: triton_wheels
-          key: ${{ needs.prepare_triton_wheel.outputs.cache_key }}
-
-      - name: Download Triton wheel artifact
-        if: steps.restore_triton_wheel.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v8.0.1
-        timeout-minutes: 30
-        continue-on-error: true
-        with:
-          name: ${{ env.TRITON_WHEEL_ARTIFACT_NAME }}
-          path: triton_wheels
-
-      - name: Resolve CK submodule SHA
-        id: ck_submodule
-        if: ${{ github.event_name != 'schedule' }}
-        run: |
-          set -euo pipefail
-          ck_path="3rdparty/composable_kernel"
-          ck_sha="$(git ls-tree HEAD "${ck_path}" | awk '{print $3}')"
-          if [ -z "${ck_sha}" ]; then
-            echo "::error::Unable to resolve CK submodule SHA"
-            exit 1
-          fi
-          echo "path=${ck_path}" >> "$GITHUB_OUTPUT"
-          echo "sha=${ck_sha}" >> "$GITHUB_OUTPUT"
-          echo "CK submodule SHA: ${ck_sha}"
-
-      - name: Clear CK submodule checkout
-        if: ${{ github.event_name != 'schedule' }}
-        run: |
-          rm -rf 3rdparty/composable_kernel .git/modules/3rdparty/composable_kernel
-
-      - name: Restore CK submodule cache
-        id: restore_ck_submodule
-        if: ${{ github.event_name != 'schedule' }}
-        continue-on-error: true
-        uses: actions/cache/restore@v4
-        env:
-          SEGMENT_DOWNLOAD_TIMEOUT_MINS: 30
-        with:
-          path: |
-            .git/modules/3rdparty/composable_kernel
-            3rdparty/composable_kernel
-          key: ${{ runner.os }}-ck-submodule-${{ steps.ck_submodule.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            ${{ runner.os }}-ck-submodule-${{ steps.ck_submodule.outputs.sha }}-
-
-      - name: Docker login
-        if: ${{ !github.event.pull_request || !github.event.pull_request.head.repo.fork }}
-        env:
-          DOCKER_USERNAME: ${{ secrets[needs.ci_config.outputs.docker_username_secret] }}
-          DOCKER_PASSWORD: ${{ secrets[needs.ci_config.outputs.docker_password_secret] }}
-        run: |
-          for attempt in 1 2 3; do
-            if echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; then
-              echo "Docker login succeeded on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Docker login attempt ${attempt} failed"
-            if [ "${attempt}" != 3 ]; then
-              sleep 10
-            fi
-          done
-          echo "Docker login failed after 3 attempts, continuing anyway"
-          exit 0
-
-      - name: Run the container
-        run: |
-          set -ex
-          echo "Starting container: aiter_test"
-
-          if [ -f "/etc/podinfo/gha-render-devices" ]; then
-            DEVICE_FLAG=$(cat /etc/podinfo/gha-render-devices)
-          else
-            DEVICE_FLAG="--device /dev/dri"
-          fi
-
-          IMAGE_TAG=${{ env.DOCKER_IMAGE }}
-
-          docker run -dt \
-          --device=/dev/kfd $DEVICE_FLAG \
-          --shm-size=16G \
-          --network=host \
-          --group-add $(getent group render | cut -d: -f3) \
-          --group-add $(getent group video | cut -d: -f3) \
-          -e TRITON_WHEEL_DIR=/workspace/triton_wheels \
-          -v "${{ github.workspace }}:/workspace" \
-          -w /workspace \
-          --name aiter_test \
-          $IMAGE_TAG
-
-      - name: Check GPU visibility
-        run: |
-          set -euo pipefail
-          if docker exec \
-            -w /workspace \
-            aiter_test \
-            bash -lc './.github/scripts/aiter_gpu_visibility_check.sh'; then
-            echo "GPU visibility check completed"
-          else
-            status=$?
-            echo "::warning::GPU visibility check failed with exit code ${status}; continuing"
-          fi
-
-      - name: Sync CK submodule
-        id: sync_ck_submodule
-        run: |
-          set -ex
-          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
-            echo "Nightly build: syncing latest CK from develop branch..."
-            git submodule set-branch --branch develop 3rdparty/composable_kernel
-            git submodule sync
-            git submodule update --init --recursive --remote --jobs 4
-          else
-            echo "Using pinned CK commit..."
-            ck_path="3rdparty/composable_kernel"
-            ck_sha="${{ steps.ck_submodule.outputs.sha }}"
-            git submodule sync "${ck_path}"
-            if git -C "${ck_path}" rev-parse --git-dir >/dev/null 2>&1 && \
-              git -C "${ck_path}" cat-file -e "${ck_sha}^{commit}" >/dev/null 2>&1; then
-              echo "Using restored CK submodule cache for ${ck_sha}"
-              echo "fetched=false" >> "$GITHUB_OUTPUT"
-              git -C "${ck_path}" checkout --detach "${ck_sha}"
-              git -C "${ck_path}" submodule update --init --recursive --depth 1 --jobs 4
-            else
-              echo "CK submodule cache miss or invalid restore; fetching ${ck_sha}"
-              rm -rf "${ck_path}" ".git/modules/${ck_path}"
-              git submodule update --init --recursive --depth 1 --jobs 4 "${ck_path}"
-              echo "fetched=true" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
-      - name: Save CK submodule cache
-        if: ${{ github.event_name != 'schedule' && steps.sync_ck_submodule.outputs.fetched == 'true' }}
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            .git/modules/3rdparty/composable_kernel
-            3rdparty/composable_kernel
-          key: ${{ runner.os }}-ck-submodule-${{ steps.ck_submodule.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Install Aiter wheel
-        run: |
-          set -euo pipefail
-          ls -lh aiter_wheels
-          shopt -s nullglob
-          wheels=(aiter_wheels/*.whl)
-          if [ "${#wheels[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one Aiter wheel artifact, found ${#wheels[@]}"
-            exit 1
-          fi
-          AITER_WHEEL_PATH="/workspace/${wheels[0]}"
-          echo "Installing Aiter wheel: ${AITER_WHEEL_PATH}"
-          docker exec \
-          -w /workspace \
-          aiter_test \
-          bash -lc "
-            set -euo pipefail
-            pip uninstall -y amd-aiter aiter || true
-            pip install -r requirements.txt
-            pip install --upgrade pandas pyzmq einops numpy==1.26.2
-            pip install --upgrade 'pybind11>=3.0.1'
-            pip install --upgrade 'ninja>=1.11.1'
-            pip install tabulate
-            pip install '${AITER_WHEEL_PATH}'
-            pip show amd-aiter
-            pip install 'amd-mori==1.2.5'
-            pip show amd-mori
-          "
-
-      - name: Mori smoke test
-        timeout-minutes: 30
-        run: |
-          set -ex
-          docker exec \
-          -w /workspace \
-          aiter_test \
-          bash -c "set -o pipefail; timeout 25m python3 op_tests/multigpu_tests/test_mori_smoke.py 2>&1 | tee -a latest_test.log"
-
-      - name: Sync prebuilt kernels into source tree
-        run: |
-          set -euo pipefail
-          docker exec -i \
-          -w /workspace \
-          aiter_test \
-          python3 - <<'PY'
-          from importlib.metadata import distribution
-          from pathlib import Path
-          from shutil import copy2
-
-          dist = distribution("amd-aiter")
-          installed_jit = Path(dist.locate_file("aiter/jit")).resolve()
-          workspace_jit = Path("/workspace/aiter/jit").resolve()
-
-          kernels = sorted(installed_jit.glob("*.so"))
-          if not kernels:
-              raise SystemExit(f"No prebuilt kernels found in {installed_jit}")
-
-          workspace_jit.mkdir(parents=True, exist_ok=True)
-          for kernel in kernels:
-              copy2(kernel, workspace_jit / kernel.name)
-
-          print(
-              f"Synced {len(kernels)} prebuilt kernels from {installed_jit} "
-              f"to {workspace_jit}"
-          )
-          PY
-
-      - name: Install triton
-        env:
-          BASE_REF: ${{ github.event.pull_request.base.ref || github.ref_name }}
-        run: |
-          # Ensure install_triton.sh is available even when the PR branch
-          # was created before the script was added to main (#2959).
-          # The workflow file always comes from the base branch, so we
-          # materialize the script from the base ref when missing.
-          if [ ! -f .github/scripts/install_triton.sh ]; then
-            mkdir -p .github/scripts
-            curl -fsSL \
-              "https://raw.githubusercontent.com/${{ github.repository }}/${BASE_REF}/.github/scripts/install_triton.sh" \
-              -o .github/scripts/install_triton.sh
-            chmod +x .github/scripts/install_triton.sh
-          fi
-          docker exec -w /workspace aiter_test \
-            bash -c "./.github/scripts/install_triton.sh && pip show triton"
-
-      - name: Show Aiter version
-        run: |
-          set -ex
-          docker exec \
-          -w /workspace \
-          aiter_test \
-          bash -c "pip show amd-aiter || true"
-
-      - name: Tests
-        timeout-minutes: 120
-        run: |
-          set -ex
-          docker exec \
-          -e MULTIGPU=TRUE \
-          -w /workspace \
-          aiter_test \
-          bash -c "./.github/scripts/aiter_test.sh"
-
-      - name: Upload test logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: multigpu-test-${{ matrix.runner }}
-          path: latest_test.log
-          retention-days: 7
-
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker rm -f aiter_test || true
-          # Self-hosted runners are persistent: drop the registry credentials
-          # written by the "Docker login" step so they do not outlive this job
-          # (SEC-00837 / ROCM-26712).
-          docker logout || true
-
-      - name: Clean up Rocm processes
-        if: always()
-        run: |
-          ./.github/scripts/clean_up_rocm.sh
-
   tuned_op_bench:
     # Tuned operator perf regression check.
     # - PR: pull last main baseline CSV, compare current shard's CSV, warn-only
@@ -1330,7 +912,6 @@ jobs:
       always() &&
       !cancelled() &&
       needs.detect_aiter_test_scope.outputs.run_tests == 'true' &&
-      github.event.action != 'labeled' &&
       github.event_name != 'schedule'
     runs-on: ubuntu-latest
     needs: [detect_aiter_test_scope, standard]
@@ -1508,24 +1089,17 @@ jobs:
       - build_aiter_wheels
       - split_aiter_tests
       - prepare_triton_wheel
-      - detect_multigpu_test_scope
       - standard
-      - multi-gpu
     steps:
       - name: Evaluate Aiter test gate
         env:
           RUN_TESTS: ${{ needs.detect_aiter_test_scope.outputs.run_tests }}
-          REQUEST_MULTIGPU_TESTS: ${{ needs.detect_aiter_test_scope.outputs.run_multigpu_tests }}
-          RUN_MULTIGPU_TESTS: ${{ needs.detect_multigpu_test_scope.outputs.run_multigpu_tests }}
           REASON: ${{ needs.detect_aiter_test_scope.outputs.reason }}
-          MULTIGPU_REASON: ${{ needs.detect_multigpu_test_scope.outputs.reason }}
           DETECT_RESULT: ${{ needs.detect_aiter_test_scope.result }}
-          MULTIGPU_DETECT_RESULT: ${{ needs.detect_multigpu_test_scope.result }}
           BUILD_RESULT: ${{ needs.build_aiter_wheels.result }}
           SPLIT_RESULT: ${{ needs.split_aiter_tests.result }}
           TRITON_RESULT: ${{ needs.prepare_triton_wheel.result }}
           STANDARD_RESULT: ${{ needs.standard.result }}
-          MULTIGPU_RESULT: ${{ needs['multi-gpu'].result }}
         run: |
           set -euo pipefail
 
@@ -1534,10 +1108,7 @@ jobs:
             echo
             echo "- Scope detection: ${DETECT_RESULT}"
             echo "- Aiter tests required: ${RUN_TESTS:-unknown}"
-            echo "- Aiter multi-GPU tests requested: ${REQUEST_MULTIGPU_TESTS:-unknown}"
-            echo "- Aiter multi-GPU tests required after build: ${RUN_MULTIGPU_TESTS:-unknown}"
             echo "- Reason: ${REASON:-unknown}"
-            echo "- Multi-GPU reason: ${MULTIGPU_REASON:-unknown}"
           } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${DETECT_RESULT}" != "success" ]; then
@@ -1545,12 +1116,7 @@ jobs:
             exit 1
           fi
 
-          multigpu_required="${RUN_MULTIGPU_TESTS:-false}"
-          if [ "${REQUEST_MULTIGPU_TESTS}" = "true" ]; then
-            multigpu_required=true
-          fi
-
-          if [ "${RUN_TESTS}" != "true" ] && [ "${multigpu_required}" != "true" ]; then
+          if [ "${RUN_TESTS}" != "true" ]; then
             echo "Aiter tests are not required for this change." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -1568,15 +1134,10 @@ jobs:
 
           check_result "build_aiter_wheels" "${BUILD_RESULT}"
           check_result "prepare_triton_wheel" "${TRITON_RESULT}"
-          check_result "detect_multigpu_test_scope" "${MULTIGPU_DETECT_RESULT}"
 
           if [ "${RUN_TESTS}" = "true" ]; then
             check_result "split_aiter_tests" "${SPLIT_RESULT}"
             check_result "standard" "${STANDARD_RESULT}"
-          fi
-
-          if [ "${multigpu_required}" = "true" ]; then
-            check_result "multi-gpu" "${MULTIGPU_RESULT}"
           fi
 
           if [ "${#failed[@]}" -gt 0 ]; then
