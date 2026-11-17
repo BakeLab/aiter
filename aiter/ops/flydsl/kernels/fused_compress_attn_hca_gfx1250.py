@@ -68,7 +68,7 @@ def _build_compress_forward_kernel(
     slice_size: int = 64,
     ape_bf16: bool = False,
     fuse_epilogue: bool = False,
-    epi_cfg: "_NormRopeScatterCfg | None" = None,
+    epi_cfg: _NormRopeScatterCfg | None = None,
 ):
     """HCA compress_forward with K-axis parallelized across multiple waves.
 

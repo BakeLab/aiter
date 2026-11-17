@@ -2038,7 +2038,7 @@ a16w16_mono_tile_kernels_list = {
 # we still emit both has_oob variants for consistency with the legacy axis).
 
 
-def _make_4g_safe(inst: "OpusGemmInstance") -> "OpusGemmInstance":
+def _make_4g_safe(inst: OpusGemmInstance) -> OpusGemmInstance:
     """Clone an OpusGemmInstance with is_4g_safe=True; everything else
     (kernel_tag, traits, kargs, BLOCK/B_*/T_*/W_*/VEC_*, cachectl, has_oob)
     is inherited verbatim. The codegen dispatch in gen_instances.py reads
@@ -2949,7 +2949,7 @@ class KernelKey:
         return f"{self.family}/{self.gfx}/{self.cu_num}/{self.kid}"
 
     @classmethod
-    def decode(cls, value: str) -> "KernelKey":
+    def decode(cls, value: str) -> KernelKey:
         family, gfx, cu_num, kid = value.split("/")
         return cls(family, gfx, int(cu_num), int(kid))
 

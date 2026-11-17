@@ -192,7 +192,7 @@ class Model:
     def kernel_backend_str(self) -> str:
         return "mla" if self.use_mla else "mha"
 
-    def effective_d_qk_v(self, kernel: "Kernel") -> tuple[int, int]:
+    def effective_d_qk_v(self, kernel: Kernel) -> tuple[int, int]:
         """
         Compute effective head dimensions for the given kernel.
 

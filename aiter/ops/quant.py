@@ -485,7 +485,7 @@ def _per_group_quant_fake(
     quant_dtype: torch.dtype = dtypes.i8,
     group_size: int = 128,
     transpose_scale: bool = False,
-    num_rows: "torch.Tensor | None" = None,
+    num_rows: torch.Tensor | None = None,
     num_rows_factor: int = 1,
     scale_type: torch.dtype = dtypes.fp32,
     scale_layout_m32k4: bool = False,

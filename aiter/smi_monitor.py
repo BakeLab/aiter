@@ -481,7 +481,7 @@ class GpuMonitor:
 @contextmanager
 def monitor_gpu(
     device_index: int = 0, interval_s: float = 0.05
-) -> Generator[GpuMonitor, None, None]:
+) -> Generator[GpuMonitor]:
     """Context manager that yields a running GpuMonitor.
 
     Example::

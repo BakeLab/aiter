@@ -23,8 +23,8 @@ def _mxfp4_intermediate_enabled():
 
 
 def resolve_swiglu_limit(
-    swiglu_limit: "object" = None,
-) -> "tuple[float | None, str]":
+    swiglu_limit: object = None,
+) -> tuple[float | None, str]:
     """Return the validated SiLU/SwiGLU clamp limit and the name it came from.
 
     ``None`` falls back to AITER_MXFP4_TUNE_SWIGLU_LIMIT; an unset or empty

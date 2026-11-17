@@ -115,8 +115,8 @@ def _job_key(job: dict) -> tuple:
 
 
 def parse_csv(
-    csv_path: "str | io.TextIOBase", swiglu_limit: float | None = None
-) -> "list[dict[str, object]]":
+    csv_path: str | io.TextIOBase, swiglu_limit: float | None = None
+) -> list[dict[str, object]]:
     """Parse a tuned CSV path or text stream into deduplicated AOT jobs.
 
     ``swiglu_limit`` defaults to AITER_MXFP4_TUNE_SWIGLU_LIMIT, else the

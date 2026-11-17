@@ -140,7 +140,7 @@ def _v_kvtab_dev(device, direct_p: bool):
 
 
 def quantize_fp6_v_clean_triton(
-    v_fp8: "torch.Tensor",
+    v_fp8: torch.Tensor,
     tile: int = 128,
     direct_p: bool = False,
     fixed_e8m0: bool = False,
@@ -177,7 +177,7 @@ def quantize_fp6_v_clean_triton(
 
 
 def quantize_fp6_v_data_scale_triton(
-    v_fp8: "torch.Tensor", tile: int = 128, fixed_e8m0: bool = False
+    v_fp8: torch.Tensor, tile: int = 128, fixed_e8m0: bool = False
 ):
     """Pack F8F6 V directly into its separate data and scale ABI buffers."""
     assert _HAVE_TRITON, "triton/torch unavailable"
@@ -541,7 +541,7 @@ def _qk_field_perm_dev(device):
     return cperm
 
 
-def quantize_fp6_lastdim_triton(x: "torch.Tensor"):
+def quantize_fp6_lastdim_triton(x: torch.Tensor):
     """Quantize the last dimension in 32-value MXFP6 E2M3 blocks."""
     assert _HAVE_TRITON, "triton/torch unavailable"
     *lead, D = x.shape
@@ -653,8 +653,8 @@ def fill_fp6_k_scale_tails(buf: "torch.Tensor", scale: "torch.Tensor") -> None:
 
 
 def reorder_fp6_k_lds_order_triton(
-    packed: "torch.Tensor",
-    scale: "torch.Tensor",
+    packed: torch.Tensor,
+    scale: torch.Tensor,
     tile: int = 128,
     return_raw: bool = False,
 ):
@@ -739,7 +739,7 @@ def reorder_fp6_k_lds_order_triton(
 
 
 def quantize_fp6_k_lds_order_triton(
-    k_thd: "torch.Tensor", tile: int = 128, return_raw: bool = False
+    k_thd: torch.Tensor, tile: int = 128, return_raw: bool = False
 ):
     """Quantize float K and reorder it into the kernel-ready LDS-order fp6 view.
 
@@ -755,8 +755,8 @@ def quantize_fp6_k_lds_order_triton(
 
 
 def fp6_k_lds_order_views_from_raw(
-    buf: "torch.Tensor",
-    sbuf: "torch.Tensor",
+    buf: torch.Tensor,
+    sbuf: torch.Tensor,
     b: int,
     sk: int,
     h: int,
@@ -789,7 +789,7 @@ def _qk_field_perm_pt(device):
     return p
 
 
-def _e2m3_encode_torch(y: "torch.Tensor") -> "torch.Tensor":
+def _e2m3_encode_torch(y: torch.Tensor) -> torch.Tensor:
     """Branchless round-half-even E2M3 encode (torch port of the _pack_qk_fp6_kernel encode).
     y float32 [...] -> uint8 codes [...] (0..63; bit5 = sign). Same normal (fp32 RNE round to 3
     mantissa bits) / subnormal (round(mag*8)) split + tie-to-even as the Triton kernel.
@@ -811,7 +811,7 @@ def _e2m3_encode_torch(y: "torch.Tensor") -> "torch.Tensor":
     return (chosen | sign).to(torch.uint8)
 
 
-def quantize_fp6_lastdim_torch(x: "torch.Tensor"):
+def quantize_fp6_lastdim_torch(x: torch.Tensor):
     """Torch-compile-friendly last-dimension MXFP6 E2M3 quantization."""
     assert _HAVE_TRITON, "torch unavailable"
     lead = list(x.shape[:-1])
@@ -879,7 +879,7 @@ def _k_scale_tail_index(nt: int, sk: int, h: int, device):
 
 
 def quantize_fp6_k_lds_order_torch(
-    k_thd: "torch.Tensor", tile: int = 128, return_raw: bool = False
+    k_thd: torch.Tensor, tile: int = 128, return_raw: bool = False
 ):
     """Graph-friendly (pure-torch) port of quantize_fp6_k_lds_order_triton (identical 17408B/tile
     ABI: 12288B compact fp6 K data + 4096B unused + 1024B lane-major E8M0 K-scale tail). Traceable by
@@ -931,7 +931,7 @@ def quantize_fp6_k_lds_order_torch(
 
 
 def pack_fp6_v_data_scale_views(
-    v: "torch.Tensor", tile: int = 128, fixed_e8m0: bool = False
+    v: torch.Tensor, tile: int = 128, fixed_e8m0: bool = False
 ):
     """Pack V into separate F8F6 data and E8M0 scale images."""
     assert _HAVE_TRITON, "triton/torch unavailable"

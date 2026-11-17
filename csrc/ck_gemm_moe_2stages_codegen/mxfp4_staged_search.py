@@ -68,7 +68,7 @@ class GEMM2StageCandidate:
 StageCandidate = TypeVar("StageCandidate", GEMM1StageCandidate, GEMM2StageCandidate)
 
 
-def screening_shortlist(
+def screening_shortlist[StageCandidate: (GEMM1StageCandidate, GEMM2StageCandidate)](
     scores: Iterable[tuple[StageCandidate, float]], screen_topk: int
 ) -> tuple[StageCandidate, ...]:
     """Keep finite positive scores, breaking ties by admitted candidate order."""

@@ -17,7 +17,7 @@ ROUTES_INSIDE_CAPTURE = Version(torch.__version__.split("+")[0]) >= Version("2.1
 
 
 @functools.cache
-def _persistent_pool(index: int) -> "torch.cuda.MemPool":
+def _persistent_pool(index: int) -> torch.cuda.MemPool:
     # Concurrent first callers can each build one and only one is kept: the cost
     # is a duplicate set of segments, not a dangling pointer.
     with torch.cuda.device(index):

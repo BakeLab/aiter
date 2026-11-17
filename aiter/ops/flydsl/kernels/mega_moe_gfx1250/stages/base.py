@@ -192,7 +192,7 @@ class DispatchStage(Protocol):
     def regions(cls, config: MegaMoEConfig, caps) -> dict:
         """The arena regions it needs, by name. Pure: no instance, no GPU."""
 
-    def build(self, res: "_EpResources") -> None:
+    def build(self, res: _EpResources) -> None:
         """Allocate and bind, once the arena exists."""
 
     def dispatch(
@@ -235,7 +235,7 @@ class CombineStage(Protocol):
     @classmethod
     def regions(cls, config: MegaMoEConfig, caps) -> dict: ...
 
-    def build(self, res: "_EpResources") -> None: ...
+    def build(self, res: _EpResources) -> None: ...
 
     def prepare(self, batch: _DispatchBatch, quant_bits: int) -> _ComputeTarget:
         """Where the expert GEMM leaves this batch's rows."""

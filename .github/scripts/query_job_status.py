@@ -5,7 +5,7 @@ import os
 import re
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -68,13 +68,13 @@ def parse_args():
 
 
 def iso_to_datetime(value: str):
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return datetime.fromisoformat(value)
 
 
 def parse_time(value: str):
     if not value:
         return None
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return datetime.fromisoformat(value)
 
 
 def format_time(value: str):
@@ -83,7 +83,7 @@ def format_time(value: str):
     parsed = parse_time(value)
     if not parsed:
         return "-"
-    return parsed.astimezone(timezone.utc).strftime("%m-%d %H:%M")
+    return parsed.astimezone(UTC).strftime("%m-%d %H:%M")
 
 
 class RateLimitExceededError(RuntimeError):
@@ -251,15 +251,15 @@ def parse_row_created_at(row: dict[str, Any]):
         return (
             created_at
             if created_at.tzinfo is not None
-            else created_at.replace(tzinfo=timezone.utc)
+            else created_at.replace(tzinfo=UTC)
         )
     if not isinstance(created_at, str):
         return None
     try:
-        parsed = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(created_at)
     except ValueError:
         return None
-    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
 
 
 def calculate_duration(started_at: str, completed_at: str):
@@ -651,8 +651,8 @@ def main():
     if not workflows:
         raise RuntimeError("No workflows specified. Please pass --workflows.")
 
-    lookback = datetime.now(timezone.utc) - timedelta(hours=args.hours)
-    report_time = datetime.now(timezone.utc)
+    lookback = datetime.now(UTC) - timedelta(hours=args.hours)
+    report_time = datetime.now(UTC)
     rate_limited = False
     rate_limit_reset_epoch = None
 
@@ -665,12 +665,12 @@ def main():
         if isinstance(snapshot_generated_at, str):
             try:
                 parsed_report_time = datetime.fromisoformat(
-                    snapshot_generated_at.replace("Z", "+00:00")
+                    snapshot_generated_at
                 )
                 report_time = (
                     parsed_report_time
                     if parsed_report_time.tzinfo is not None
-                    else parsed_report_time.replace(tzinfo=timezone.utc)
+                    else parsed_report_time.replace(tzinfo=UTC)
                 )
             except ValueError:
                 pass
@@ -730,7 +730,7 @@ def main():
     if not job_rows:
         print("No matching job records in the selected time window.")
         if rate_limited and rate_limit_reset_epoch:
-            reset_time = datetime.fromtimestamp(rate_limit_reset_epoch, timezone.utc)
+            reset_time = datetime.fromtimestamp(rate_limit_reset_epoch, UTC)
             print(
                 f"[warn] Rate limit resets at {reset_time.isoformat()} (UTC). "
                 "Re-run after reset for complete data."
@@ -812,7 +812,7 @@ def main():
         )
 
     if rate_limited and rate_limit_reset_epoch:
-        reset_time = datetime.fromtimestamp(rate_limit_reset_epoch, timezone.utc)
+        reset_time = datetime.fromtimestamp(rate_limit_reset_epoch, UTC)
         print()
         print(
             f"> NOTE: Partial data due to GitHub API rate limit. "

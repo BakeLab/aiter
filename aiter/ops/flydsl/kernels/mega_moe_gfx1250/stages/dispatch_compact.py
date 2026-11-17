@@ -41,7 +41,7 @@ from .base import (
 
 
 def _compact_gemm_align_m(
-    config: "MegaMoEConfig", recv_bound: int | None = None
+    config: MegaMoEConfig, recv_bound: int | None = None
 ) -> int:
     """Tile alignment for compact dest rows; must match GEMM ``max(tile_m, tile_m2)``.
 

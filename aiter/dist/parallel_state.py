@@ -30,7 +30,7 @@ from collections.abc import Callable
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from multiprocessing import shared_memory
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import patch
 
 import torch
@@ -95,10 +95,10 @@ def _get_unique_name(name: str) -> str:
     return newname
 
 
-_groups: dict[str, Callable[[], "GroupCoordinator"]] = {}
+_groups: dict[str, Callable[[], GroupCoordinator]] = {}
 
 
-def _register_group(group: "GroupCoordinator") -> None:
+def _register_group(group: GroupCoordinator) -> None:
     # looks like Python 3.8 does not understand `ReferenceType`
     _groups[group.unique_name] = weakref.ref(group)  # type: ignore
 
@@ -562,7 +562,7 @@ class GroupCoordinator:
     mq_broadcaster: Any | None  # shared memory broadcaster
     # Group this one borrows process groups / communicators from; None if it
     # allocated its own.
-    reuse_from: "GroupCoordinator | None"
+    reuse_from: GroupCoordinator | None
     # Teardown ownership: a borrowed resource is destroyed only by its owner
     # (a second destroy_process_group() raises). Set on both paths; no default.
     _owns_cpu_group: bool
@@ -577,7 +577,7 @@ class GroupCoordinator:
         use_device_communicator: bool,  # whether to use device communicator
         use_message_queue_broadcaster: bool = False,
         group_name: str | None = None,
-        reuse_from: "GroupCoordinator | None" = None,
+        reuse_from: GroupCoordinator | None = None,
         is_ep: bool = False,
     ):
         group_name = group_name or "anonymous"
@@ -1526,7 +1526,7 @@ class GroupCoordinator:
         self,
         tensor_dict: dict[str, torch.Tensor | Any],
         dst: int | None = None,
-        all_gather_group: Optional["GroupCoordinator"] = None,
+        all_gather_group: GroupCoordinator | None = None,
     ) -> dict[str, torch.Tensor | Any] | None:
         """Send the input tensor dictionary.
         NOTE: `dst` is the local rank of the source rank.
@@ -1578,7 +1578,7 @@ class GroupCoordinator:
     def recv_tensor_dict(
         self,
         src: int | None = None,
-        all_gather_group: Optional["GroupCoordinator"] = None,
+        all_gather_group: GroupCoordinator | None = None,
     ) -> dict[str, torch.Tensor | Any] | None:
         """Recv the input tensor dictionary.
         NOTE: `src` is the local rank of the source rank.
@@ -1731,7 +1731,7 @@ def init_model_parallel_group(
     use_device_communicator: bool = True,
     use_message_queue_broadcaster: bool = False,
     group_name: str | None = None,
-    reuse_from: "GroupCoordinator | None" = None,
+    reuse_from: GroupCoordinator | None = None,
     is_ep: bool = False,
 ) -> GroupCoordinator:
     return GroupCoordinator(
@@ -1841,7 +1841,7 @@ class CustomGroupConfig:
         self,
         name: str,
         ranks: list,
-    ) -> "CustomGroupConfig":
+    ) -> CustomGroupConfig:
         assert name not in self._groups, f"custom group '{name}' already exists"
         assert ranks, f"custom group '{name}': ranks list must not be empty"
         self._groups[name] = ranks
@@ -1852,12 +1852,12 @@ class CustomGroupConfig:
         return dict(self._groups)
 
 
-_CUSTOM: dict[str, "GroupCoordinator"] = {}
+_CUSTOM: dict[str, GroupCoordinator] = {}
 
 
 def get_custom_group(
     name: str | None = None,
-) -> "GroupCoordinator | dict[str, GroupCoordinator]":
+) -> GroupCoordinator | dict[str, GroupCoordinator]:
     """Get custom group coordinator(s).
 
     - If only one custom group is initialized, returns the GroupCoordinator

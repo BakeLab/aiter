@@ -351,7 +351,7 @@ class MessageQueue:
         self.close()
 
     @staticmethod
-    def create_from_handle(handle: Handle, rank) -> "MessageQueue":
+    def create_from_handle(handle: Handle, rank) -> MessageQueue:
         self = MessageQueue.__new__(MessageQueue)
         self.handle = handle
         self._is_writer = False
@@ -609,7 +609,7 @@ class MessageQueue:
         max_chunk_bytes,
         max_chunks,
         writer_rank=0,
-    ) -> "MessageQueue":
+    ) -> MessageQueue:
         if isinstance(pg, ProcessGroup):
             group_rank = dist.get_rank(pg)
             group_world_size = dist.get_world_size(pg)

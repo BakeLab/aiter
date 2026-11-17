@@ -166,7 +166,7 @@ class VMMBuffer:
         alloc_size: int,
         local_device_id: int,
         access_device_ids: list[int],
-    ) -> "VMMBuffer":
+    ) -> VMMBuffer:
         obj = object.__new__(cls)
         obj._device_id = local_device_id
         obj._gran = _get_granularity(local_device_id)

@@ -8,7 +8,6 @@ import shlex
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import redirect_stderr, redirect_stdout
-from typing import TypeAlias
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -86,11 +85,11 @@ KERNEL_DICT: dict[str, Callable[[list[str]], None]] = {
 }
 
 # Shape dicts from model_shapes.json (int, str values)
-ShapeDict: TypeAlias = dict[str, int | str]
+type ShapeDict = dict[str, int | str]
 # model -> kernel -> list of shapes
-ModelShapesData: TypeAlias = dict[str, dict[str, list[ShapeDict]]]
+type ModelShapesData = dict[str, dict[str, list[ShapeDict]]]
 # One benchmark result row (metric value; "B" can be None for GEMM)
-ResultRow: TypeAlias = dict[str, int | float | str | None]
+type ResultRow = dict[str, int | float | str | None]
 
 ROPE_METRIC_NOTE = (
     "Note: RoPE reports only total flops, i.e. total floating-point operations, not throughput (TFLOPS). "
