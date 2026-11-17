@@ -47,15 +47,6 @@ jobs:
         # it -- a third-party import in aiter/plugin turns this red.
         run: python3 -m pytest -q tests/test_plugin.py tests/test_plugin_contracts.py tests/test_plugin_discovery.py tests/test_plugin_overhead.py
 
-  black:
-    name: Check Code Style with Black
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run Black
-        uses: psf/black@stable
-
   ruff:
     name: Check Code Style with Ruff
     runs-on: ubuntu-latest
