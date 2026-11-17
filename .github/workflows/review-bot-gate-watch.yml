@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   watch:
+    if: github.server_url == 'https://github.com'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
