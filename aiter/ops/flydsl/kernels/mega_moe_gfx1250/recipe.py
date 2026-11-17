@@ -230,7 +230,7 @@ class MegaMoERecipe:
         hidden_pad: int = 0,
         intermediate_pad: int = 0,
         swiglu_limit: float = 0.0,
-    ) -> "MegaMoERecipe":
+    ) -> MegaMoERecipe:
         """The recipe the old constructor flags describe.
 
         The only reader of stage1_fused, stage2_fused and dispatch_backend, and of
@@ -446,7 +446,7 @@ class MegaMoEConfig:
         return self.recipe.is_quant_dispatch_wire
 
     @property
-    def dispatch_wire_spec(self) -> "_DispatchWire":
+    def dispatch_wire_spec(self) -> _DispatchWire:
         return _DISPATCH_WIRE_SPECS[self.dispatch_wire]
 
     @property

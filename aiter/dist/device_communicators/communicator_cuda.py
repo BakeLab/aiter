@@ -42,7 +42,7 @@ class CudaCommunicator(DeviceCommunicatorBase):
         device: torch.device | None = None,
         device_group: ProcessGroup | None = None,
         unique_name: str = "",
-        reuse_from: "CudaCommunicator | None" = None,
+        reuse_from: CudaCommunicator | None = None,
     ):
         self._all2all_manager = None
         self._active_all2all_backend = None

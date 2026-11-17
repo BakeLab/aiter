@@ -159,7 +159,7 @@ def _all_gather_kernel(
 
 def all_gather(
     input_shard: Tensor,
-    ctx: "IrisCommContext" = None,
+    ctx: IrisCommContext = None,
     block_m: int = 64,
     block_n: int = 64,
     group_size_m: int = 8,

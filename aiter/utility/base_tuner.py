@@ -355,10 +355,10 @@ class TunerCommon:
             tunedf = pd.DataFrame(columns=columns)
         return self._normalize_tuned_csv(tunedf)
 
-    def _normalize_tuned_csv(self, tunedf: "pd.DataFrame") -> "pd.DataFrame":
+    def _normalize_tuned_csv(self, tunedf: pd.DataFrame) -> pd.DataFrame:
         return self._normalize_tuned_identity(tunedf)
 
-    def _normalize_tuned_identity(self, tunedf: "pd.DataFrame") -> "pd.DataFrame":
+    def _normalize_tuned_identity(self, tunedf: pd.DataFrame) -> pd.DataFrame:
         """Fill missing legacy gfx values; keep explicit ones."""
         tunedf = tunedf.copy()
         if "gfx" in self.keys:
@@ -513,8 +513,8 @@ class TunerCommon:
         tunedf.to_csv(tune_file, index=False)
 
     def _drop_superseded_rows(
-        self, tunedf: "pd.DataFrame", dedup_keys: "list[str]"
-    ) -> "pd.DataFrame":
+        self, tunedf: pd.DataFrame, dedup_keys: list[str]
+    ) -> pd.DataFrame:
         """Drop duplicate-key rows that a later row supersedes."""
         return tunedf.drop_duplicates(subset=dedup_keys, keep="last")
 
@@ -583,7 +583,7 @@ class TunerCommon:
         resultdf = self.result_to_df(bestConfigs)
         return resultdf
 
-    def _summary_shape_keys(self) -> "list[str]":
+    def _summary_shape_keys(self) -> list[str]:
         return self.keys
 
     def tune_summary(self, status):

@@ -36,7 +36,7 @@ from op_tests.op_benchmarks.triton.utils.benchmark_utils import (
 
 @dataclass
 class BenchRun:
-    configs: list["BenchConfig"]
+    configs: list[BenchConfig]
     torch_dtype: torch.dtype
     unit: str  # "ms", "TFLOPS", "GB/s"
     plot_name: str

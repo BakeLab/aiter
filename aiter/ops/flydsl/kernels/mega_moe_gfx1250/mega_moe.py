@@ -163,7 +163,7 @@ class MegaMoEGfx1250:
         communicator,
         situ_beta: torch.Tensor | None = None,
         situ_linear_beta: torch.Tensor | None = None,
-    ) -> "MegaMoEGfx1250":
+    ) -> MegaMoEGfx1250:
         """Build the MegaMoE ``recipe`` describes at ``geometry``.
 
         ``situ_beta`` / ``situ_linear_beta`` are the Situv2 activation's tensors,

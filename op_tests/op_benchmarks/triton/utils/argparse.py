@@ -31,7 +31,7 @@ def pow2_int(value: str) -> int:
     return int_value
 
 
-def override_parser_action(
+def override_parser_action[T](
     parser: argparse.ArgumentParser,
     action: str,
     choices: Iterable[_T] | None = None,

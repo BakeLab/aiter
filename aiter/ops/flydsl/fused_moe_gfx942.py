@@ -84,7 +84,7 @@ class Config:
             use_batch1_algorithm=use_batch1_algorithm == "True",
         )
 
-    def unsupported_reason(self, problem: "_Problem") -> str | None:
+    def unsupported_reason(self, problem: _Problem) -> str | None:
         if self.use_batch1_algorithm and not 2 <= problem.batch <= 8:
             return "direct decoding requires 2 to 8 tokens"
         # Batch 1 runs the batch-1 kernels for any tile; tune it only as 16_16_16.

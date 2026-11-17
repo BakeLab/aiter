@@ -100,7 +100,7 @@ class _ArenaLayout:
     total_bytes: int
 
     @classmethod
-    def of(cls, regions) -> "_ArenaLayout":
+    def of(cls, regions) -> _ArenaLayout:
         """Lay ``regions`` down in the order given, each 256 B aligned."""
         offsets, offset = {}, 0
         for name, size in regions:
@@ -113,7 +113,7 @@ class _ArenaLayout:
         return cls(tuple((name, int(size)) for name, size in regions), offsets, total)
 
     @classmethod
-    def merge(cls, *requests) -> "_ArenaLayout":
+    def merge(cls, *requests) -> _ArenaLayout:
         """The regions every request asks for, each at the largest size asked,
         in _ARENA_REGION_ORDER."""
         need = {}

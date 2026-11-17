@@ -24,7 +24,7 @@ logger = logging.getLogger("aiter")
 def calculate_heap_size(
     M: int,
     N: int,
-    dtype: "torch.dtype",
+    dtype: torch.dtype,
     world_size: int | None = None,
     quant_mode: str = "none",
     all_gather: bool = True,

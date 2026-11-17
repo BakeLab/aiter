@@ -41,9 +41,11 @@ from functools import cache, lru_cache, partial, wraps
 from platform import uname
 from typing import (
     Any,
-    Generic,
     Literal,
+    ParamSpec,
+    TypeIs,
     TypeVar,
+    assert_never,
     overload,
 )
 from uuid import uuid4
@@ -55,7 +57,6 @@ import torch
 import torch.types
 import yaml
 from packaging.version import Version
-from typing_extensions import ParamSpec, TypeIs, assert_never
 
 from aiter import logger
 
@@ -308,7 +309,7 @@ class Counter:
         self.counter = 0
 
 
-class LRUCache(Generic[T]):
+class LRUCache[T]:
 
     def __init__(self, capacity: int):
         self.cache: OrderedDict[Hashable, T] = OrderedDict()
@@ -551,7 +552,7 @@ def in_wsl() -> bool:
     return "microsoft" in " ".join(uname()).lower()
 
 
-def make_async(func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
+def make_async[**P, T](func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
     """Take a blocking function, and run it on in an executor thread.
 
     This function prevents the blocking function from blocking the
@@ -567,10 +568,10 @@ def make_async(func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
     return _async_wrapper
 
 
-async def iterate_with_cancellation(
-    iterator: AsyncGenerator[T, None],
+async def iterate_with_cancellation[T](
+    iterator: AsyncGenerator[T],
     is_cancelled: Callable[[], Awaitable[bool]],
-) -> AsyncGenerator[T, None]:
+) -> AsyncGenerator[T]:
     """Convert async iterator into one that polls the provided function
     at least once per second to check for client cancellation.
     """
@@ -594,10 +595,10 @@ async def iterate_with_cancellation(
                 return
 
 
-async def merge_async_iterators(
-    *iterators: AsyncGenerator[T, None],
+async def merge_async_iterators[T](
+    *iterators: AsyncGenerator[T],
     is_cancelled: Callable[[], Awaitable[bool]] | None = None,
-) -> AsyncGenerator[tuple[int, T], None]:
+) -> AsyncGenerator[tuple[int, T]]:
     """Merge multiple asynchronous iterators into a single iterator.
 
     This method handle the case where some iterators finish before others.
@@ -635,7 +636,7 @@ async def merge_async_iterators(
                 await it.aclose()
 
 
-async def collect_from_async_generator(iterator: AsyncGenerator[T, None]) -> list[T]:
+async def collect_from_async_generator[T](iterator: AsyncGenerator[T]) -> list[T]:
     """Collect all items from an async generator into a list."""
     items = []
     async for item in iterator:
@@ -760,7 +761,7 @@ def update_environment_variables(envs: dict[str, str]):
         os.environ[k] = v
 
 
-def chunk_list(lst: list[T], chunk_size: int):
+def chunk_list[T](lst: list[T], chunk_size: int):
     """Yield successive chunk_size chunks from lst."""
     for i in range(0, len(lst), chunk_size):
         yield lst[i : i + chunk_size]
@@ -959,7 +960,7 @@ class DeviceMemoryProfiler:
         gc.collect()
 
 
-def make_ndarray_with_pad(
+def make_ndarray_with_pad[T](
     x: list[list[T]],
     pad: T,
     dtype: npt.DTypeLike,
@@ -984,7 +985,7 @@ def make_ndarray_with_pad(
     return padded_x
 
 
-def make_tensor_with_pad(
+def make_tensor_with_pad[T](
     x: list[list[T]],
     pad: T,
     dtype: torch.dtype,
@@ -1026,7 +1027,7 @@ def get_dtype_size(dtype: torch.dtype) -> int:
 
 
 # `collections` helpers
-def is_list_of(
+def is_list_of[T](
     value: object,
     typ: type[T],
     *,
@@ -1050,34 +1051,34 @@ JSONTree = (
 
 
 @overload
-def json_map_leaves(
+def json_map_leaves[T, U](
     func: Callable[[T], U],
     value: dict[str, JSONTree[T]],
 ) -> dict[str, JSONTree[U]]: ...
 
 
 @overload
-def json_map_leaves(
+def json_map_leaves[T, U](
     func: Callable[[T], U],
     value: list[JSONTree[T]],
 ) -> list[JSONTree[U]]: ...
 
 
 @overload
-def json_map_leaves(
+def json_map_leaves[T, U](
     func: Callable[[T], U],
     value: tuple[JSONTree[T], ...],
 ) -> tuple[JSONTree[U], ...]: ...
 
 
 @overload
-def json_map_leaves(
+def json_map_leaves[T, U](
     func: Callable[[T], U],
     value: JSONTree[T],
 ) -> JSONTree[U]: ...
 
 
-def json_map_leaves(func: Callable[[T], U], value: JSONTree[T]) -> JSONTree[U]:
+def json_map_leaves[T, U](func: Callable[[T], U], value: JSONTree[T]) -> JSONTree[U]:
     if isinstance(value, dict):
         return {k: json_map_leaves(func, v) for k, v in value.items()}
     elif isinstance(value, list):
@@ -1088,7 +1089,7 @@ def json_map_leaves(func: Callable[[T], U], value: JSONTree[T]) -> JSONTree[U]:
         return func(value)
 
 
-def flatten_2d_lists(lists: list[list[T]]) -> list[T]:
+def flatten_2d_lists[T](lists: list[list[T]]) -> list[T]:
     """Flatten a list of lists to a single list."""
     return [item for sublist in lists for item in sublist]
 
@@ -1165,7 +1166,7 @@ def enable_trace_function_call_for_thread() -> None:
         filename = (
             f"VLLM_TRACE_FUNCTION_for_process_{os.getpid()}"
             f"_thread_{threading.get_ident()}_"
-            f"at_{datetime.datetime.now(datetime.timezone.utc)}.log"
+            f"at_{datetime.datetime.now(datetime.UTC)}.log"
         ).replace(" ", "_")
         log_path = os.path.join(tmp_dir, "vllm", get_vllm_instance_id(), filename)
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
@@ -1173,7 +1174,7 @@ def enable_trace_function_call_for_thread() -> None:
 
 
 # `functools` helpers
-def identity(value: T) -> T:
+def identity[T](value: T) -> T:
     return value
 
 
@@ -1300,7 +1301,7 @@ def weak_bind(
     return weak_bound
 
 
-def run_once(f: Callable[P, None]) -> Callable[P, None]:
+def run_once[**P](f: Callable[P, None]) -> Callable[P, None]:
 
     def run_once_wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
         if not run_once_wrapper.ran_once_flag:  # type: ignore[attr-defined]

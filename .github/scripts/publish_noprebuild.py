@@ -10,12 +10,11 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlsplit
 from urllib.request import Request, urlopen
-
 
 GITEA_HOST = "gitea.int.bb.pub"
 GITEA_ORIGIN = f"https://{GITEA_HOST}"
@@ -62,7 +61,7 @@ def commit_timestamp(commit: str) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
-    return datetime.fromisoformat(value).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromisoformat(value).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def put_immutable_manifest(path: Path, *, commit: str, token: str) -> str:

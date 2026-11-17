@@ -164,7 +164,7 @@ def _reduce_scatter_kernel(
 
 def reduce_scatter(
     input_tensor: Tensor,
-    ctx: "IrisCommContext" = None,
+    ctx: IrisCommContext = None,
     block_m: int = 16,
     block_n: int = 64,
     group_size_m: int = 8,

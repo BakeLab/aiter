@@ -183,7 +183,7 @@ def list_branches(api: Api) -> list[dict]:
 
 
 def _parse(stamp: str) -> dt.datetime:
-    return dt.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    return dt.datetime.fromisoformat(stamp)
 
 
 def protected_branches(api: Api) -> set[str]:
@@ -364,7 +364,7 @@ def main() -> int:
 
     api = Api(token, repo, args.apply)
     exempt_names, exempt_patterns = load_exemptions(args.exemptions)
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     today = now.date()
 
     skip = protected_branches(api) | pr_branches(api)

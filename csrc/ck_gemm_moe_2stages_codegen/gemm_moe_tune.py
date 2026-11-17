@@ -6150,7 +6150,7 @@ class FmoeTuner(TunerCommon):
                     mask = self._already_tuned_mask(dedup_cols)
                     self.untunedf = self.untunedf[~mask]
 
-    def _already_tuned_mask(self, dedup_cols: "list[str]") -> "pd.Series":
+    def _already_tuned_mask(self, dedup_cols: list[str]) -> pd.Series:
         return (
             self.untunedf[dedup_cols]
             .apply(tuple, axis=1)
@@ -6838,13 +6838,13 @@ class Mxfp4FlydslTuner(FmoeTuner):
     )
 
     @staticmethod
-    def _capture_configuration() -> "dict[str, float | None]":
+    def _capture_configuration() -> dict[str, float | None]:
         limit, _source = resolve_swiglu_limit()
         return {"swiglu_limit": limit}
 
     def _invocation_configuration(
-        self, args: "argparse.Namespace | SimpleNamespace | None" = None
-    ) -> "dict[str, float | None]":
+        self, args: argparse.Namespace | SimpleNamespace | None = None
+    ) -> dict[str, float | None]:
         # Callers keep these variables unchanged for the whole run.
         if args is not None and hasattr(args, "mxfp4_configuration"):
             self._configuration = args.mxfp4_configuration
@@ -6855,8 +6855,8 @@ class Mxfp4FlydslTuner(FmoeTuner):
         return self._configuration
 
     def _require_distinct_input_output(
-        self, args: "argparse.Namespace | SimpleNamespace"
-    ) -> "None":
+        self, args: argparse.Namespace | SimpleNamespace
+    ) -> None:
         input_file = args.untune_file
         output_file = self.get_out_file(args.tune_file)
         same_file = os.path.realpath(input_file) == os.path.realpath(output_file)
@@ -6868,21 +6868,21 @@ class Mxfp4FlydslTuner(FmoeTuner):
                 "(-i/--untune_file and -o/--tune_file)"
             )
 
-    def parse_args(self) -> "argparse.Namespace":
+    def parse_args(self) -> argparse.Namespace:
         args = super().parse_args()
         self._require_distinct_input_output(args)
         self._configuration = self._capture_configuration()
         args.mxfp4_configuration = self._configuration
         return args
 
-    def pre_process(self, args: "argparse.Namespace | SimpleNamespace") -> "None":
+    def pre_process(self, args: argparse.Namespace | SimpleNamespace) -> None:
         self._require_distinct_input_output(args)
         self._invocation_configuration(args)
         return super().pre_process(args)
 
     def _unsupported_row_reason(
-        self, row: "Mapping[str, object] | pd.Series"
-    ) -> "str | None":
+        self, row: Mapping[str, object] | pd.Series
+    ) -> str | None:
         for field, expected in (
             ("dtype", dtypes.bf16),
             ("q_dtype_a", dtypes.fp4x2),
@@ -6923,15 +6923,15 @@ class Mxfp4FlydslTuner(FmoeTuner):
         return None
 
     @staticmethod
-    def _names_kernel(tunedf: "pd.DataFrame") -> "pd.Series":
+    def _names_kernel(tunedf: pd.DataFrame) -> pd.Series:
         """Rows naming a kernel are live configs, even without a timing."""
         names = [c for c in ("kernelName1", "kernelName2") if c in tunedf]
         kernels = tunedf[names].fillna("").astype(str)
         return kernels.apply(lambda c: c.str.strip().ne("")).any(axis=1)
 
     def _drop_superseded_rows(
-        self, tunedf: "pd.DataFrame", dedup_keys: "list[str]"
-    ) -> "pd.DataFrame":
+        self, tunedf: pd.DataFrame, dedup_keys: list[str]
+    ) -> pd.DataFrame:
         """Drop only rows the runtime can never load.
 
         get_cfg_2stages uses the first row per key, and a later one only as an
@@ -6963,7 +6963,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
         )
         return tunedf[~(later & no_fallback) & ~placeholder]
 
-    def _already_tuned_mask(self, dedup_cols: "list[str]") -> "pd.Series":
+    def _already_tuned_mask(self, dedup_cols: list[str]) -> pd.Series:
         configured = self.tunedf[self._names_kernel(self.tunedf)]
         mask = (
             self.untunedf[dedup_cols]
@@ -6976,7 +6976,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
         return mask & ~unsupported
 
     @staticmethod
-    def _runtime_device_identity(gpu: "int") -> "tuple[str, int]":
+    def _runtime_device_identity(gpu: int) -> tuple[str, int]:
         properties = torch.cuda.get_device_properties(gpu)
         arch = str(properties.gcnArchName).split(":", 1)[0].lower()
         cu = int(properties.multi_processor_count)
@@ -6984,7 +6984,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
             raise ValueError(f"MXFP4 tuning GPU{gpu} must be gfx950, got {arch}")
         return arch, cu
 
-    def get_gfx(self) -> "str":
+    def get_gfx(self) -> str:
         # Single-slot pruned and full runs use the current GPU.
         return (
             str(
@@ -6996,7 +6996,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
             .lower()
         )
 
-    def get_cu_num(self) -> "int":
+    def get_cu_num(self) -> int:
         return int(
             torch.cuda.get_device_properties(
                 torch.cuda.current_device()
@@ -7004,8 +7004,8 @@ class Mxfp4FlydslTuner(FmoeTuner):
         )
 
     def _preflight_devices(
-        self, mp_num: "int", ngpu: "int", *, staged: "bool" = False
-    ) -> "list[tuple[str, int]]":
+        self, mp_num: int, ngpu: int, *, staged: bool = False
+    ) -> list[tuple[str, int]]:
         if ngpu < 1:
             raise ValueError("MXFP4 tuning requires a visible runtime GPU")
         selected = (
@@ -7015,11 +7015,11 @@ class Mxfp4FlydslTuner(FmoeTuner):
         )
         return [self._runtime_device_identity(gpu) for gpu in selected]
 
-    def _summary_shape_keys(self) -> "list[str]":
+    def _summary_shape_keys(self) -> list[str]:
         # Rows may run on any scheduled GPU; output keeps that GPU's gfx/CU.
         return [key for key in self.keys if key not in ("gfx", "cu_num")]
 
-    def _normalize_tuned_csv(self, tunedf: "pd.DataFrame") -> "pd.DataFrame":
+    def _normalize_tuned_csv(self, tunedf: pd.DataFrame) -> pd.DataFrame:
         tunedf = super()._normalize_tuned_csv(tunedf)
         # Runtime ignores only flydsl_fallback rows; every other tag is live.
         if "_tag" in tunedf:
@@ -7287,7 +7287,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
                 cands.append(self._candidate_row(row, bm, kn1, kn2v))
         return cands
 
-    def _staged_candidate_plan(self, row: "dict[str, object]") -> "StagedSearchPlan":
+    def _staged_candidate_plan(self, row: dict[str, object]) -> StagedSearchPlan:
         reason = self._unsupported_row_reason(row)
         if reason is not None:
             raise ValueError(reason)
@@ -7678,7 +7678,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
             )
             return 0, 0
 
-    def _screening_limit(self) -> "float | None":
+    def _screening_limit(self) -> float | None:
         return self._invocation_configuration()["swiglu_limit"]
 
     def _prepare_screening_case(
@@ -8061,7 +8061,7 @@ class Mxfp4FlydslTuner(FmoeTuner):
             return self.INVALID_TIME
 
     def _staged_shortlists(
-        self, row: dict[str, Any], plan: "StagedSearchPlan", args: Any, timeout: int
+        self, row: dict[str, Any], plan: StagedSearchPlan, args: Any, timeout: int
     ) -> tuple[dict[Any, Any], dict[Any, Any]]:
         """Screen GEMM1/GEMM2 per group and return their top-K shortlists."""
         screen_topk = getattr(args, "mxfp4_screen_topk", DEFAULT_SCREEN_TOPK)

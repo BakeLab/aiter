@@ -171,7 +171,7 @@ class SdmaComm:
     def offset(self, name: str) -> int:
         return self._slices[name].offset
 
-    def commit(self) -> "SdmaComm":
+    def commit(self) -> SdmaComm:
         uid = [self._comm_cls.get_unique_id() if self.rank == 0 else None]
         src0 = dist.get_global_rank(self.group, 0) if self.group else 0
         dist.broadcast_object_list(uid, src=src0, group=self.group)

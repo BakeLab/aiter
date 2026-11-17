@@ -19,7 +19,7 @@ from aiter.dist.device_communicators.base_device_communicator import (
 class FakeCcoCommunicator:
     unique_id_calls = 0
     init_calls: ClassVar[list[tuple]] = []
-    instances: ClassVar[list["FakeCcoCommunicator"]] = []
+    instances: ClassVar[list[FakeCcoCommunicator]] = []
     fail_barrier = False
 
     def __init__(self):

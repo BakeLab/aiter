@@ -229,7 +229,7 @@ def reduce_scatter_rmsnorm_quant_all_gather(
     input_tensor: Tensor,
     gamma: Tensor,
     epsilon: float = 1e-6,
-    ctx: "IrisCommContext" = None,
+    ctx: IrisCommContext = None,
     quant_mode: str = "none",
     do_allgather: bool = True,
     # Pre-allocated buffers (optional, for reuse across iterations)
