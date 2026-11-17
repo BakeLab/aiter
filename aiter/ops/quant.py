@@ -485,11 +485,13 @@ def _per_group_quant_fake(
     quant_dtype: torch.dtype = dtypes.i8,
     group_size: int = 128,
     transpose_scale: bool = False,
-    num_rows: torch.Tensor | None = None,
+    # Preserve the string annotations: routed contracts fingerprint
+    # inspect.Signature, so resolving these names changes the published schema.
+    num_rows: "torch.Tensor | None" = None,  # noqa: UP037
     num_rows_factor: int = 1,
     scale_type: torch.dtype = dtypes.fp32,
     scale_layout_m32k4: bool = False,
-) -> tuple[Tensor, Tensor]:
+) -> "tuple[Tensor, Tensor]":  # noqa: UP037
     """Shapes only -- both results are freshly allocated here, so neither
     aliases an argument and registration has nothing to declare about them.
 
