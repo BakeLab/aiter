@@ -133,7 +133,7 @@ class _MissingMxfp4MoeAuxInstances(RuntimeError):
         )
 
 
-def prepare_mxfp4_moe_aux(shapes: "Iterable[tuple[int, int, int, int]]") -> None:
+def prepare_mxfp4_moe_aux(shapes: Iterable[tuple[int, int, int, int]]) -> None:
     """Load/build the module and verify the BM16 sort instances for ``shapes``.
 
     ``shapes`` contains (expert, model_dim, inter_dim, topk) tuples. Instances

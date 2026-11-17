@@ -75,7 +75,7 @@ def _env_int(name: str) -> int | None:
 
 
 def _compact_gemm_tiles(
-    config: "MegaMoEConfig", recv_bound: int | None = None
+    config: MegaMoEConfig, recv_bound: int | None = None
 ) -> tuple[int, int, int]:
     """``(tile_m, tile_m2, m_warp2)`` fused_moe resolves for this recv bound,
     before it clamps both tiles to the plan alignment.

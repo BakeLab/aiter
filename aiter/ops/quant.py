@@ -489,7 +489,7 @@ def _per_group_quant_fake(
     num_rows_factor: int = 1,
     scale_type: torch.dtype = dtypes.fp32,
     scale_layout_m32k4: bool = False,
-) -> "tuple[Tensor, Tensor]":
+) -> tuple[Tensor, Tensor]:
     """Shapes only -- both results are freshly allocated here, so neither
     aliases an argument and registration has nothing to declare about them.
 
@@ -509,6 +509,7 @@ def _per_group_quant_fake(
     )
 
 
+# These quoted annotations are part of the introspected provider schema.
 @_route(op="per_group_quant", version=1, fake=_per_group_quant_fake)
 def _per_group_quant_routed(
     x: Tensor,
@@ -516,11 +517,11 @@ def _per_group_quant_routed(
     quant_dtype: torch.dtype = dtypes.i8,
     group_size: int = 128,
     transpose_scale: bool = False,
-    num_rows: "torch.Tensor | None" = None,
+    num_rows: "torch.Tensor | None" = None,  # noqa: UP037
     num_rows_factor: int = 1,
     scale_type: torch.dtype = dtypes.fp32,
     scale_layout_m32k4: bool = False,
-) -> "tuple[Tensor, Tensor]":
+) -> "tuple[Tensor, Tensor]":  # noqa: UP037
     """Quantize ``x`` in groups along its last axis, one scale per group.
 
     Returns ``(y, scale)`` -- a new ``quant_dtype`` tensor shaped like ``x``
@@ -602,11 +603,11 @@ def per_group_quant_hip(
     quant_dtype: torch.dtype = dtypes.i8,
     group_size: int = 128,
     transpose_scale: bool = False,
-    num_rows: "torch.Tensor | None" = None,
+    num_rows: torch.Tensor | None = None,
     num_rows_factor: int = 1,
     scale_type: torch.dtype = dtypes.fp32,
     scale_layout_m32k4: bool = False,
-) -> "tuple[Tensor, Tensor]":
+) -> tuple[Tensor, Tensor]:
     """The historical spelling of ``per_group_quant``.
 
     The name predates a neutral one, so an ordinary call routes and a
