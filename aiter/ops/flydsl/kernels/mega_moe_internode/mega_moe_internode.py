@@ -24,14 +24,13 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Self
 
 import flydsl.compiler as flyc
 import torch
 import torch.distributed as dist
 from flydsl._mlir import ir
 from flydsl.utils import env
-from typing_extensions import Self
 
 from ..mega_moe.quant import BLOCK as _QUANT_BLOCK
 from ..mega_moe.quant import per_1x32_mx_quant

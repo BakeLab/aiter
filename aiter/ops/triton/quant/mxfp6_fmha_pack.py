@@ -616,7 +616,7 @@ def _k_lds_src_within(nt: int, total: int, h: int, device):
     return g
 
 
-def fill_fp6_k_scale_tails(buf: "torch.Tensor", scale: "torch.Tensor") -> None:
+def fill_fp6_k_scale_tails(buf: torch.Tensor, scale: torch.Tensor) -> None:
     """Write every 128-token tile's 1024B K-scale tail of a flat MXFP6 K buffer, in place.
 
     buf : contiguous 1D uint8 buffer of [b, h, n_tiles * FP6_K_TILE_BYTES] K tiles, laid out as

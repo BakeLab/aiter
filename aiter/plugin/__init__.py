@@ -565,10 +565,10 @@ def route(
     return decorate
 
 
-def _dispatch(
+def _dispatch[**P, R](
     op: Op,
     canonicalize: _Canonicalizer,
-    native: Callable[_P, _R],
+    native: Callable[P, R],
     args: tuple[Any, ...],
     kwargs: dict[str, Any],
 ) -> _R:
@@ -618,7 +618,7 @@ def _dispatch(
         )
         # Once provider execution starts, errors propagate. Falling back here could
         # repeat side effects or hide a broken kernel behind a successful result.
-        return cast(_R, candidate.run(*provider_args, **provider_kwargs))
+        return cast(R, candidate.run(*provider_args, **provider_kwargs))
 
     reason, provider_name = _native_outcome(failure, declined)
     return _run_native(
@@ -1078,16 +1078,16 @@ def _binding_canonicalizer(contract: Signature) -> _Canonicalizer:
     return canonicalize
 
 
-def _run_native(
+def _run_native[**P, R](
     op: Op,
-    native: Callable[_P, _R],
+    native: Callable[P, R],
     args: tuple[Any, ...],
     kwargs: dict[str, Any],
     reason: str,
     config_source: str,
     generation: int,
     provider: str | None = None,
-) -> _R:
+) -> R:
     _record(
         Decision(
             op=op,

@@ -444,7 +444,7 @@ def _matches(inst: _Instance, want: dict) -> bool:
 class MqaLogitsScheduleBuffers:
     """One live schedule's device memory, from :meth:`MqaLogitsConfig.schedule_buffers`."""
 
-    cfg: "MqaLogitsConfig"
+    cfg: MqaLogitsConfig
     cta_info: torch.Tensor  # [num_ctas + scratch, 8] int32 records
     cu_groups: (
         torch.Tensor
@@ -458,7 +458,7 @@ class MqaLogitsSchedule:
     `query_start_loc` and `row_ends` tensors it was built from (the launch checks their identity,
     not contents)."""
 
-    cfg: "MqaLogitsConfig"
+    cfg: MqaLogitsConfig
     query_start_loc: torch.Tensor
     row_ends: torch.Tensor
     cta_info: torch.Tensor

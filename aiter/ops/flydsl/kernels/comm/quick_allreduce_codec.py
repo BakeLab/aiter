@@ -224,7 +224,7 @@ class Codec:
 
 
 @functools.cache
-def codecs_for_block(block: int = BLOCK) -> dict[str, "Codec"]:
+def codecs_for_block(block: int = BLOCK) -> dict[str, Codec]:
     """The wire formats at a given workgroup width."""
 
     block = validate_block(block)

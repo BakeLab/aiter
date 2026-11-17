@@ -112,7 +112,7 @@ class RotatingBufferBench:
         return safety * free_bytes / (1024**3)
 
     @classmethod
-    def from_dict(cls, config: dict) -> "RotatingBufferBench":
+    def from_dict(cls, config: dict) -> RotatingBufferBench:
         """__init__'s defaults, overridden by whichever keys ``config``
         provides (a ``None`` value means "not specified", keep the default).
         ``config`` is typically
