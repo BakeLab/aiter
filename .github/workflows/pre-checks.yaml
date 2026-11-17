@@ -42,4 +42,4 @@ jobs:
         # findings burned down in the same or a follow-up PR.
         run: pip3 install ruff==0.16.0
       - name: Run Ruff
-        run: ruff check . --no-fix --select E4,E7,E9,F
+        run: ruff check . --no-fix
