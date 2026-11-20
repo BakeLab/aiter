@@ -24,13 +24,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # Labels other than ci:triton-300x and ci:triton-355 change nothing here: such
-  # a run gets a group of its own, so it cannot cancel the run in progress, and
-  # all its jobs skip. Each push to main gets a group of its own, so no merge
-  # cancels the run of an earlier one.
-  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && !contains(fromJSON('["ci:triton-300x", "ci:triton-355"]'), github.event.label.name) && format('-{0}', github.run_id) || '' }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
+  group: triton-test-${{ github.event_name }}-${{ (github.event_name == 'push' || github.event_name == 'pull_request') && (github.event.pull_request.number || github.ref) || github.run_id }}${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && !contains(fromJSON('["ci:triton-300x", "ci:triton-355"]'), github.event.label.name) && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
 jobs:
   ci_config:
     needs: [split_triton_tests]
